@@ -1,0 +1,2 @@
+# HidroCare
+Hyperhidrosis App
