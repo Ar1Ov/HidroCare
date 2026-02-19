@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { BubbleBackground } from "@/components/layout/bubble-background";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Notes App",
-	description: "A simple notes app built with Next.js and Supabase",
+	title: "HidroCare",
+	description: "A simple hyperhidrosis care app built with Next.js and Supabase",
 };
 
 export default function RootLayout({
@@ -35,7 +36,7 @@ export default function RootLayout({
 					enableSystem
 					disableTransitionOnChange
 				>
-					{children}
+					<BubbleBackground>{children}</BubbleBackground>
 					<Toaster />
 				</ThemeProvider>
 			</body>

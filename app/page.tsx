@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FileText, ArrowRight, MessageCircle } from "lucide-react";
+import { FileText, ArrowRight } from "lucide-react";
 
 export default function HomePage() {
 	return (
-		<div className="min-h-screen flex flex-col">
-			<header className="border-b">
+		<div className="flex min-h-screen flex-col">
+			<header className="border-b border-sky-200/50 bg-white/60 backdrop-blur-md dark:border-sky-800/30 dark:bg-slate-900/60">
 				<div className="container flex h-14 items-center justify-between">
-					<div className="flex items-center gap-2 font-bold">
+					<div className="flex items-center gap-2 font-bold text-sky-800 dark:text-sky-200">
 						<FileText className="h-5 w-5" />
-						<span>Notes</span>
+						<span>HidroCare</span>
 					</div>
 					<nav className="flex items-center gap-2">
 						<Link href="/login">
@@ -37,7 +37,7 @@ export default function HomePage() {
 						</p>
 					</div>
 
-					<div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
+					<div className="flex flex-col sm:flex-row gap-4">
 						<Link href="/signup">
 							<Button size="lg" className="gap-2">
 								Get started
@@ -47,12 +47,6 @@ export default function HomePage() {
 						<Link href="/login">
 							<Button size="lg" variant="outline">
 								I have an account
-							</Button>
-						</Link>
-						<Link href="/ai-support">
-							<Button size="lg" variant="secondary" className="gap-2">
-								<MessageCircle className="h-4 w-4" />
-								AI Support
 							</Button>
 						</Link>
 					</div>

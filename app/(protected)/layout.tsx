@@ -18,9 +18,9 @@ export default async function ProtectedLayout({
 	} = await supabase.auth.getUser();
 
 	return (
-		<div className="min-h-screen flex flex-col">
+		<div className="flex min-h-screen flex-col">
 			<Header userEmail={user?.email} />
-			<main className="flex-1 container py-6">{children}</main>
+			<main className="flex flex-1 flex-col container py-6">{children}</main>
 		</div>
 	);
 }
