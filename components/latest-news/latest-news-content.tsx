@@ -50,8 +50,8 @@ export function LatestNewsContent() {
       else setLoading(true);
 
       const [newsRes, researchRes] = await Promise.all([
-        fetch("/api/news", { cache: "no-store" }),
-        fetch("/api/research", { cache: "no-store" }),
+        fetch("/api/auth/news", { cache: "no-store" }),
+        fetch("/api/auth/research", { cache: "no-store" }),
       ]);
 
       const newsJson = await newsRes.json().catch(() => ({}));
