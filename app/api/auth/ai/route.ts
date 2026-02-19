@@ -1,68 +1,70 @@
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
 
-const DAILY_LIMIT = 10;         // <-- change if you want
-const MAX_INPUT_CHARS = 800;    // <-- keep small to control cost
-const MAX_OUTPUT_TOKENS = 300;  // <-- biggest cost lever
+const DAILY_LIMIT = 10; // change if you want
+const MAX_INPUT_CHARS = 800; // keep small to control cost
+const MAX_OUTPUT_TOKENS = 300; // biggest cost lever
 
 function freeModeResponse(message: string): string {
-    const lower = message.toLowerCase();
-  
-    if (lower.includes("trigger")) {
-      return `
-  Common triggers for excessive sweating include:
-  
-  • Stress and anxiety  
-  • Heat and humidity  
-  • Spicy foods  
-  • Caffeine  
-  • Tight or synthetic clothing  
-  
-  If sweating occurs without clear triggers or starts suddenly, consider speaking with a clinician.
-  `.trim();
-    }
-  
-    if (lower.includes("doctor") || lower.includes("see a doctor")) {
-      return `
-  You should consider seeing a doctor if:
-  
-  • Sweating is sudden or worsening  
-  • It happens at night with fever or weight loss  
-  • You feel chest pain, fainting, or weakness  
-  • It significantly affects daily life  
-  
-  A healthcare professional can help rule out underlying causes.
-  `.trim();
-    }
-  
-    if (lower.includes("work") || lower.includes("manage")) {
-      return `
-  Helpful strategies for managing sweat at work:
-  
-  • Wear breathable fabrics  
-  • Use clinical-strength antiperspirant at night  
-  • Keep wipes or extra clothing available  
-  • Practice calming breathing techniques  
-  
-  Small environmental adjustments can make a big difference.
-  `.trim();
-    }
-  
+  const lower = (message || "").toLowerCase();
+
+  if (lower.includes("trigger") || lower.includes("cause")) {
     return `
-  Hyperhidrosis is a condition involving excessive sweating beyond normal temperature regulation.
-  
-  Management options include:
-  • Prescription-strength antiperspirants  
-  • Iontophoresis  
-  • Stress management  
-  • Medical consultation if symptoms are severe  
-  
-  This information is educational, not medical advice.
-  `.trim();
+Common triggers for excessive sweating include:
+
+• Stress and anxiety  
+• Heat and humidity  
+• Spicy foods  
+• Caffeine  
+• Tight or synthetic clothing  
+
+If sweating occurs without clear triggers or starts suddenly, consider speaking with a clinician.
+`.trim();
   }
-  
+
+  if (lower.includes("doctor") || lower.includes("see a doctor")) {
+    return `
+You should consider seeing a doctor if:
+
+• Sweating is sudden or worsening  
+• It happens at night with fever or weight loss  
+• You feel chest pain, fainting, or weakness  
+• It significantly affects daily life  
+
+A healthcare professional can help rule out underlying causes.
+`.trim();
+  }
+
+  if (lower.includes("work") || lower.includes("manage")) {
+    return `
+Helpful strategies for managing sweat at work:
+
+• Wear breathable fabrics  
+• Use clinical-strength antiperspirant at night  
+• Keep wipes or extra clothing available  
+• Practice calming breathing techniques  
+
+Small environmental adjustments can make a big difference.
+`.trim();
+  }
+
+  return `
+Hyperhidrosis is a condition involving excessive sweating beyond normal temperature regulation.
+
+Management options include:
+• Prescription-strength antiperspirants  
+• Iontophoresis  
+• Stress management  
+• Medical consultation if symptoms are severe  
+
+This information is educational, not medical advice.
+`.trim();
+}
 
 export async function POST(req: Request) {
+  // Make message available to the catch block for fallback
+  let userMessage = "";
+
   try {
     const supabase = await createClient();
 
@@ -97,6 +99,8 @@ export async function POST(req: Request) {
     }
 
     const trimmed = message.trim();
+    userMessage = trimmed;
+
     if (!trimmed) {
       return Response.json({ error: "Message is required" }, { status: 400 });
     }
@@ -108,8 +112,7 @@ export async function POST(req: Request) {
     }
 
     // Daily limit
-    const today = new Date();
-    const day = today.toISOString().slice(0, 10); // YYYY-MM-DD
+    const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
     const { data: usageRow, error: usageReadErr } = await supabase
       .from("ai_usage_daily")
@@ -146,20 +149,19 @@ export async function POST(req: Request) {
     const openai = new OpenAI({ apiKey });
 
     const response = await openai.chat.completions.create({
-      model: "gpt-5-nano", // <-- GPT-5 nano model id :contentReference[oaicite:1]{index=1}
+      model: "gpt-5-nano",
       temperature: 0.4,
       max_tokens: MAX_OUTPUT_TOKENS,
       messages: [
         {
           role: "system",
-          content:
-            [
-              "You are a friendly and supportive hyperhidrosis education assistant.",
-              "Give calm, practical guidance and coping strategies.",
-              "Do NOT diagnose, and do NOT prescribe medication.",
-              "If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly.",
-              `Keep replies concise (under ~8 sentences) unless the user asks for more.`,
-            ].join(" "),
+          content: [
+            "You are a friendly and supportive hyperhidrosis education assistant.",
+            "Give calm, practical guidance and coping strategies.",
+            "Do NOT diagnose, and do NOT prescribe medication.",
+            "If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly.",
+            "Keep replies concise (under ~8 sentences) unless the user asks for more.",
+          ].join(" "),
         },
         { role: "user", content: trimmed },
       ],
@@ -168,34 +170,32 @@ export async function POST(req: Request) {
     return Response.json({
       reply: response.choices[0]?.message?.content ?? "",
       remainingToday: Math.max(0, DAILY_LIMIT - (currentCount + 1)),
+      fallback: false,
     });
   } catch (err: any) {
-    const msg =
-      err?.error?.message ||
-      err?.message ||
-      "AI unavailable";
-  
-    const code =
-      err?.error?.code ||
-      err?.code;
-  
-    console.error("AI error:", msg);
-  
-    // If OpenAI quota error OR any failure → use fallback
+    const msg = err?.error?.message || err?.message || "AI unavailable";
+    const code = err?.error?.code || err?.code;
+
+    console.error("AI error:", code, msg);
+
+    // For quota/missing credentials/etc → fallback using the user's real message
     if (
       code === "insufficient_quota" ||
-      msg.toLowerCase().includes("quota") ||
-      msg.toLowerCase().includes("missing credentials")
+      String(msg).toLowerCase().includes("quota") ||
+      String(msg).toLowerCase().includes("missing credentials")
     ) {
       return Response.json({
-        reply: freeModeResponse("fallback"),
+        reply: freeModeResponse(userMessage),
         fallback: true,
+        reason: code || "ai_unavailable",
       });
     }
-  
+
+    // Any other failure → still fallback, but use user message to pick best response
     return Response.json({
-      reply: freeModeResponse("general"),
+      reply: freeModeResponse(userMessage),
       fallback: true,
+      reason: code || "ai_error",
     });
   }
 }
