@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
@@ -88,7 +89,7 @@ export default function AboutHyperhidrosisPage() {
                 <strong className="text-rose-700 dark:text-rose-300">
                   Axillary
                 </strong>{" "}
-                Underarms
+                Underarms, Genitalia
               </li>
               <li>
                 <strong className="text-amber-700 dark:text-amber-300">
@@ -97,6 +98,15 @@ export default function AboutHyperhidrosisPage() {
                 Face & scalp
               </li>
             </ul>
+            <div className="mt-6">
+              <Image
+                src="/images/hyperhidrosis-diagram.png"
+                alt="Diagram showing common areas affected by hyperhidrosis"
+                width={1200}
+                height={800}
+                className="rounded-2xl border border-sky-200/60 shadow-md dark:border-sky-800/40"
+               />
+            </div>
           </CardContent>
         </Card>
 
