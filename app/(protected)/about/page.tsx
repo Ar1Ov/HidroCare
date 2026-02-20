@@ -14,9 +14,6 @@ export default function AboutHyperhidrosisPage() {
         <h1 className="text-3xl font-bold tracking-tight text-sky-900 dark:text-sky-100 sm:text-4xl">
           Understanding Hyperhidrosis
         </h1>
-        <p className="text-muted-foreground">
-          Educational overview of excessive sweating — causes, types, and treatment options.
-        </p>
       </div>
 
       <div className="mt-8 space-y-8">
@@ -68,20 +65,38 @@ export default function AboutHyperhidrosisPage() {
           </CardContent>
         </Card>
 
-        {/* COMMON AREAS */}
-        <Card>
+         {/* COMMON AREAS */}
+         <Card>
           <CardHeader>
             <CardTitle>Common Areas Affected</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
+          <CardContent className="space-y-4 text-sm text-muted-foreground">
             <ul className="list-disc space-y-2 pl-5">
-              <li><strong>Palmar</strong> – Hands</li>
-              <li><strong>Plantar</strong> – Feet</li>
-              <li><strong>Axillary</strong> – Underarms</li>
-              <li><strong>Craniofacial</strong> – Face & scalp</li>
+              <li>
+                <strong className="text-emerald-700 dark:text-emerald-300">
+                  Palmar
+                </strong>{" "}
+                – Hands
+              </li>
+              <li>
+                <strong className="text-indigo-700 dark:text-indigo-300">
+                  Plantar
+                </strong>{" "}
+                – Feet
+              </li>
+              <li>
+                <strong className="text-rose-700 dark:text-rose-300">
+                  Axillary
+                </strong>{" "}
+                – Underarms
+              </li>
+              <li>
+                <strong className="text-amber-700 dark:text-amber-300">
+                  Craniofacial
+                </strong>{" "}
+                – Face & scalp
+              </li>
             </ul>
-          </CardContent>
-        </Card>
 
         {/* TREATMENTS */}
         <Card>

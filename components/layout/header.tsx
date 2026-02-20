@@ -32,17 +32,17 @@ export function Header({ userEmail }: HeaderProps) {
 					<FileText className="h-5 w-5" />
 					<span>HidroCare</span>
 				</Link>
-				<Link href="/about">
-					<Button
-					variant={pathname === "/about" ? "secondary" : "ghost"}
-					size="sm"
-					className="gap-2 text-sky-700 dark:text-sky-300"
-				>
-					<BookOpen className="h-4 w-4" />
-					<span className="hidden sm:inline">About</span>
-					</Button>
-				</Link>
 				<nav className="ml-auto flex items-center gap-2 sm:gap-4">
+					<Link href="/about">
+						<Button
+						variant={pathname === "/about" ? "secondary" : "ghost"}
+						size="sm"
+						className="gap-2 text-sky-700 dark:text-sky-300"
+					>
+						<BookOpen className="h-4 w-4" />
+						<span className="hidden sm:inline">About</span>
+						</Button>
+					</Link>
 					<Link href="/latest-news">
 						<Button
 							variant={pathname === "/latest-news" ? "secondary" : "ghost"}
