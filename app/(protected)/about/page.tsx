@@ -76,27 +76,29 @@ export default function AboutHyperhidrosisPage() {
                 <strong className="text-emerald-700 dark:text-emerald-300">
                   Palmar
                 </strong>{" "}
-                – Hands
+                Hands
               </li>
               <li>
                 <strong className="text-indigo-700 dark:text-indigo-300">
                   Plantar
                 </strong>{" "}
-                – Feet
+                Feet
               </li>
               <li>
                 <strong className="text-rose-700 dark:text-rose-300">
                   Axillary
                 </strong>{" "}
-                – Underarms
+                Underarms
               </li>
               <li>
                 <strong className="text-amber-700 dark:text-amber-300">
                   Craniofacial
                 </strong>{" "}
-                – Face & scalp
+                Face & scalp
               </li>
             </ul>
+          </CardContent>
+        </Card>
 
         {/* TREATMENTS */}
         <Card>
