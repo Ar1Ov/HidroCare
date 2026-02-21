@@ -17,7 +17,7 @@ type AreaInfo = {
   title: string;
   subtitle: string;
   colorClass: string;
-  buttonColorClass: string;
+  buttonStyle: React.CSSProperties;
   bullets: string[];
 };
 
@@ -33,8 +33,11 @@ export function ClickableHHDiagram() {
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-100",
-        buttonColorClass:
-          "bg-black text-emerald-400 hover:bg-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900",
+        buttonStyle: {
+          backgroundColor: "#000000",
+          color: "#34d399",
+          border: "none",
+        },
         bullets: [
           "Sweaty palms can affect writing, devices, handshakes",
           "First steps: antiperspirant at night, absorbent wipes",
@@ -47,8 +50,11 @@ export function ClickableHHDiagram() {
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-indigo-100 text-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-100",
-        buttonColorClass:
-          "bg-black text-indigo-400 hover:bg-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900",
+        buttonStyle: {
+          backgroundColor: "#000000",
+          color: "#818cf8",
+          border: "none",
+        },
         bullets: [
           "Breathable shoes/socks can help",
           "Rotate shoes, use moisture-wicking socks",
@@ -61,8 +67,11 @@ export function ClickableHHDiagram() {
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-rose-100 text-rose-900 dark:bg-rose-900/30 dark:text-rose-100",
-        buttonColorClass:
-          "bg-black text-rose-400 hover:bg-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900",
+        buttonStyle: {
+          backgroundColor: "#000000",
+          color: "#fb7185",
+          border: "none",
+        },
         bullets: [
           "Night application of antiperspirant is common",
           "Loose/breathable layers can reduce discomfort",
@@ -75,8 +84,11 @@ export function ClickableHHDiagram() {
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100",
-        buttonColorClass:
-          "bg-black text-amber-400 hover:bg-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900",
+        buttonStyle: {
+          backgroundColor: "#000000",
+          color: "#fbbf24",
+          border: "none",
+        },
         bullets: [
           "Triggers can include heat, stress, spicy food",
           "Cooling strategies: fans, cold water, breathable hats",
@@ -103,7 +115,6 @@ export function ClickableHHDiagram() {
 
         {/* Diagram wrapper MUST have size */}
         <div className="relative mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-sky-200/60 bg-sky-50/30 dark:border-sky-800/40 dark:bg-slate-800/30">
-          {/* If your image is different, update src */}
           <Image
             src="/images/hyperhidrosis-diagram.png"
             alt="Hyperhidrosis diagram"
@@ -113,7 +124,7 @@ export function ClickableHHDiagram() {
             priority
           />
 
-          {/* Clickable hotspots (adjust top/left/width/height to match your Canva image) */}
+          {/* Clickable hotspots */}
           <button
             type="button"
             aria-label="Palmar (hands)"
@@ -140,40 +151,36 @@ export function ClickableHHDiagram() {
           />
         </div>
 
-        {/* Colored manual buttons with black background */}
+        {/* Manual buttons with inline styles */}
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
+          <button
             onClick={() => openArea("palmar")}
-            className={AREAS.palmar.buttonColorClass}
+            style={AREAS.palmar.buttonStyle}
+            className="h-8 rounded-md px-3 text-xs font-medium transition-colors hover:opacity-80"
           >
             Palmar
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
+          </button>
+          <button
             onClick={() => openArea("plantar")}
-            className={AREAS.plantar.buttonColorClass}
+            style={AREAS.plantar.buttonStyle}
+            className="h-8 rounded-md px-3 text-xs font-medium transition-colors hover:opacity-80"
           >
             Plantar
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
+          </button>
+          <button
             onClick={() => openArea("axillary")}
-            className={AREAS.axillary.buttonColorClass}
+            style={AREAS.axillary.buttonStyle}
+            className="h-8 rounded-md px-3 text-xs font-medium transition-colors hover:opacity-80"
           >
             Axillary
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
+          </button>
+          <button
             onClick={() => openArea("craniofacial")}
-            className={AREAS.craniofacial.buttonColorClass}
+            style={AREAS.craniofacial.buttonStyle}
+            className="h-8 rounded-md px-3 text-xs font-medium transition-colors hover:opacity-80"
           >
             Craniofacial
-          </Button>
+          </button>
         </div>
       </div>
 
