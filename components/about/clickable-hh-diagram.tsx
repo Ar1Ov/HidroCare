@@ -96,7 +96,7 @@ export function ClickableHHDiagram() {
         <div className="relative mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-sky-200/60 bg-sky-50/30 dark:border-sky-800/40 dark:bg-slate-800/30">
           {/* If your image is different, update src */}
           <Image
-            src="/hh-diagram.png"
+            src="/images/hh-diagram.png"
             alt="Hyperhidrosis diagram"
             width={1200}
             height={700}
