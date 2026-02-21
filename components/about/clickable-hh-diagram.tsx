@@ -17,6 +17,7 @@ type AreaInfo = {
   title: string;
   subtitle: string;
   colorClass: string;
+  buttonColorClass: string;
   bullets: string[];
 };
 
@@ -32,6 +33,8 @@ export function ClickableHHDiagram() {
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-100",
+        buttonColorClass:
+          "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-300 dark:hover:bg-emerald-900/70",
         bullets: [
           "Sweaty palms can affect writing, devices, handshakes",
           "First steps: antiperspirant at night, absorbent wipes",
@@ -44,6 +47,8 @@ export function ClickableHHDiagram() {
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-indigo-100 text-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-100",
+        buttonColorClass:
+          "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:hover:bg-indigo-900/70",
         bullets: [
           "Breathable shoes/socks can help",
           "Rotate shoes, use moisture-wicking socks",
@@ -56,6 +61,8 @@ export function ClickableHHDiagram() {
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-rose-100 text-rose-900 dark:bg-rose-900/30 dark:text-rose-100",
+        buttonColorClass:
+          "bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-900/70",
         bullets: [
           "Night application of antiperspirant is common",
           "Loose/breathable layers can reduce discomfort",
@@ -68,6 +75,8 @@ export function ClickableHHDiagram() {
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100",
+        buttonColorClass:
+          "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:hover:bg-amber-900/70",
         bullets: [
           "Triggers can include heat, stress, spicy food",
           "Cooling strategies: fans, cold water, breathable hats",
@@ -131,21 +140,37 @@ export function ClickableHHDiagram() {
           />
         </div>
 
-        {/* Optional manual buttons (helpful if hotspot positions are off) */}
+        {/* Colored manual buttons */}
         <div className="mt-3 flex flex-wrap gap-2">
-          <Button variant="secondary" size="sm" onClick={() => openArea("palmar")}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => openArea("palmar")}
+            className={AREAS.palmar.buttonColorClass}
+          >
             Palmar
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => openArea("plantar")}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => openArea("plantar")}
+            className={AREAS.plantar.buttonColorClass}
+          >
             Plantar
           </Button>
-          <Button variant="secondary" size="sm" onClick={() => openArea("axillary")}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => openArea("axillary")}
+            className={AREAS.axillary.buttonColorClass}
+          >
             Axillary
           </Button>
           <Button
             variant="secondary"
             size="sm"
             onClick={() => openArea("craniofacial")}
+            className={AREAS.craniofacial.buttonColorClass}
           >
             Craniofacial
           </Button>
