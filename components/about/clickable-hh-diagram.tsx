@@ -98,8 +98,8 @@ export function ClickableHHDiagram() {
           <Image
             src="/images/hyperhidrosis-diagram.png"
             alt="Hyperhidrosis diagram"
-            width={1200}
-            height={700}
+            width={600}
+            height={350}
             className="h-auto w-full select-none"
             priority
           />
