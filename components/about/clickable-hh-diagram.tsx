@@ -34,7 +34,7 @@ export function ClickableHHDiagram() {
         colorClass:
           "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-100",
         buttonColorClass:
-          "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-300 dark:hover:bg-emerald-900/70",
+          "bg-black text-emerald-400 hover:bg-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900",
         bullets: [
           "Sweaty palms can affect writing, devices, handshakes",
           "First steps: antiperspirant at night, absorbent wipes",
@@ -48,7 +48,7 @@ export function ClickableHHDiagram() {
         colorClass:
           "bg-indigo-100 text-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-100",
         buttonColorClass:
-          "bg-indigo-100 text-indigo-700 hover:bg-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:hover:bg-indigo-900/70",
+          "bg-black text-indigo-400 hover:bg-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900",
         bullets: [
           "Breathable shoes/socks can help",
           "Rotate shoes, use moisture-wicking socks",
@@ -62,7 +62,7 @@ export function ClickableHHDiagram() {
         colorClass:
           "bg-rose-100 text-rose-900 dark:bg-rose-900/30 dark:text-rose-100",
         buttonColorClass:
-          "bg-rose-100 text-rose-700 hover:bg-rose-200 dark:bg-rose-900/50 dark:text-rose-300 dark:hover:bg-rose-900/70",
+          "bg-black text-rose-400 hover:bg-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900",
         bullets: [
           "Night application of antiperspirant is common",
           "Loose/breathable layers can reduce discomfort",
@@ -76,7 +76,7 @@ export function ClickableHHDiagram() {
         colorClass:
           "bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100",
         buttonColorClass:
-          "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/50 dark:text-amber-300 dark:hover:bg-amber-900/70",
+          "bg-black text-amber-400 hover:bg-slate-800 dark:bg-slate-950 dark:hover:bg-slate-900",
         bullets: [
           "Triggers can include heat, stress, spicy food",
           "Cooling strategies: fans, cold water, breathable hats",
@@ -140,7 +140,7 @@ export function ClickableHHDiagram() {
           />
         </div>
 
-        {/* Colored manual buttons */}
+        {/* Colored manual buttons with black background */}
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
             variant="secondary"
