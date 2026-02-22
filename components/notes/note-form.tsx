@@ -45,11 +45,14 @@ export function NoteForm({ note, mode }: NoteFormProps) {
     note?.title || `Log Entry - ${new Date().toISOString().split("T")[0]}`
   );
   // Replace the date state handling to store as string directly
-  const [formData, setFormData] = useState({
-	date: (existingContent as any)?.date || new Date().toISOString().split("T")[0],
-	// ... rest
+  type FormData = {
+	date: string;       // or Date, depending on your input
+	timeOfDay: string;  // e.g. "morning" | "afternoon" | "evening" | "night"
+  };
+  const [formData, setFormData] = useState<FormData>({
+	date: new Date().toISOString().slice(0, 10),
+	timeOfDay: "morning",
   });
-  
 
   const [areaData, setAreaData] = useState(
     (existingContent as any)?.areas ||
