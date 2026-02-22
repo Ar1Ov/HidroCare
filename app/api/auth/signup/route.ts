@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 			email,
 			password,
 			options: {
-			  emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+			  emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/callback`,
 			},
 		  });
 
