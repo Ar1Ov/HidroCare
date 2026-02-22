@@ -31,14 +31,14 @@ export async function POST(request: Request) {
 		const { email, password } = result.data;
 
 		// Create the user account
+		
 		const { data, error } = await supabase.auth.signUp({
 			email,
 			password,
 			options: {
-				// Redirect here after clicking the confirmation email link
-				emailRedirectTo: `${new URL(request.url).origin}/auth/confirm`,
+			  emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
 			},
-		});
+		  });
 
 		if (error) {
 			return NextResponse.json({ error: error.message }, { status: 400 });
