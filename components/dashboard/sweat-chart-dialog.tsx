@@ -53,7 +53,7 @@ export function SweatChartDialog() {
       setErr(null);
 
       try {
-        const res = await fetch("/api/stats/", { cache: "no-store" });
+        const res = await fetch("/api/auth/stats/", { cache: "no-store" });
         const json = await res.json();
 
         if (!res.ok) throw new Error(json?.error || "Failed to load stats");
