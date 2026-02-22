@@ -48,10 +48,12 @@ export function NoteForm({ note, mode }: NoteFormProps) {
   type FormData = {
 	date: string;       // or Date, depending on your input
 	timeOfDay: string;  // e.g. "morning" | "afternoon" | "evening" | "night"
+	notes: string; 
   };
   const [formData, setFormData] = useState<FormData>({
 	date: new Date().toISOString().slice(0, 10),
 	timeOfDay: "morning",
+	notes: "",
   });
 
   const [areaData, setAreaData] = useState(
