@@ -54,7 +54,7 @@ export function NoteCard({ note }: NoteCardProps) {
 
   // Get all triggers
   const allTriggers = areas.flatMap((a: any) => a.triggers || []);
-  const uniqueTriggers = [...new Set(allTriggers)];
+  const uniqueTriggers: string[] = Array.from(new Set(triggers as string[]));
 
   // Get stress score
   const stressScore = Math.round(
