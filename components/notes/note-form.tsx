@@ -44,10 +44,16 @@ export function NoteForm({ note, mode }: NoteFormProps) {
   const [title, setTitle] = useState(
     note?.title || `Log Entry - ${new Date().toISOString().split("T")[0]}`
   );
+  // Replace the date state handling to store as string directly
   const [formData, setFormData] = useState({
-    date: (existingContent as any)?.date || new Date().toISOString().split("T")[0],
-    timeOfDay: (existingContent as any)?.timeOfDay || "",
-    notes: (existingContent as any)?.notes || "",
+	date: (existingContent as any)?.date || new Date().toISOString().split("T")[0],
+	// ... rest
+  });
+  
+  // When building content, keep date as string (not new Date)
+  const buildContent = () => ({
+	date: formData.date, // Keep as "YYYY-MM-DD" string, don't convert to Date
+	// ... rest
   });
 
   const [areaData, setAreaData] = useState(

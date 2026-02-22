@@ -21,12 +21,23 @@ export function NoteCard({ note }: NoteCardProps) {
     ? JSON.parse(note.content) 
     : note.content;
 
+  // FIX: Parse date as local date without timezone conversion
+  const getDisplayDate = (dateString: string) => {
+    if (!dateString) return "Unknown date";
+    
+    // Split the date string and create date in local timezone
+    const [year, month, day] = dateString.split("-").map(Number);
+    const date = new Date(year, month - 1, day); // month is 0-indexed
+    
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   const logDate = content?.date 
-    ? new Date(content.date).toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      })
+    ? getDisplayDate(content.date)
     : new Date(note.created_at).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
@@ -41,10 +52,9 @@ export function NoteCard({ note }: NoteCardProps) {
     ? Math.round(areas.reduce((sum: number, a: any) => sum + (a.severity || 0), 0) / areas.length)
     : 0;
 
-  // Get top triggers
+  // Get all triggers
   const allTriggers = areas.flatMap((a: any) => a.triggers || []);
   const uniqueTriggers = [...new Set(allTriggers)];
-  const topTriggers = uniqueTriggers.slice(0, 3);
 
   // Get stress score
   const stressScore = Math.round(
@@ -54,15 +64,7 @@ export function NoteCard({ note }: NoteCardProps) {
     (stress.confidenceImpact || 0)) / 4
   );
 
-  // Get severity color
-  const getSeverityColor = (severity: number): string => {
-    if (severity >= 8) return "#ef4444"; // red-500
-    if (severity >= 5) return "#eab308"; // yellow-500
-    if (severity > 0) return "#22c55e"; // green-500
-    return "#94a3b8"; // slate-400
-  };
-
-  // Get background color class
+  // Get severity background class
   const getSeverityBgClass = (severity: number): string => {
     if (severity >= 8) return "bg-red-500";
     if (severity >= 5) return "bg-yellow-500";
@@ -70,7 +72,7 @@ export function NoteCard({ note }: NoteCardProps) {
     return "bg-slate-300";
   };
 
-  // Get text color class
+  // Get severity text color class
   const getSeverityTextClass = (severity: number): string => {
     if (severity >= 8) return "text-red-600 dark:text-red-400";
     if (severity >= 5) return "text-yellow-600 dark:text-yellow-400";
@@ -105,7 +107,7 @@ export function NoteCard({ note }: NoteCardProps) {
               {AREAS.map((area) => {
                 const areaData = areas.find((a: any) => a.area === area.id) || {};
                 const severity = areaData.severity || 0;
-                const height = Math.max(severity * 4, 8); // Minimum height of 8px
+                const height = Math.max(severity * 4, 8);
                 
                 return (
                   <div key={area.id} className="flex-1 flex flex-col items-center gap-1">
