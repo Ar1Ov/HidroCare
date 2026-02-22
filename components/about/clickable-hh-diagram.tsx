@@ -18,7 +18,8 @@ type AreaInfo = {
   subtitle: string;
   colorClass: string;
   buttonStyle: React.CSSProperties;
-  bullets: string[];
+  commonSigns: string[];
+  practicalOptions: string[];
 };
 
 export function ClickableHHDiagram() {
@@ -29,7 +30,7 @@ export function ClickableHHDiagram() {
     () => ({
       palmar: {
         key: "palmar",
-        title: "Palmar (Hands)",
+        title: "🖐️ Palmar (Hands)",
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/30 dark:text-emerald-100",
@@ -38,15 +39,20 @@ export function ClickableHHDiagram() {
           color: "#34d399",
           border: "none",
         },
-        bullets: [
-          "Sweaty palms can affect writing, devices, handshakes",
-          "First steps: antiperspirant at night, absorbent wipes",
-          "If persistent: iontophoresis is often used for hands",
+        commonSigns: [
+          "Noticeably sweaty palms even at rest or in cool environments",
+          "Difficulty with writing, holding paper, using phones/laptops, or firm handshakes",
+          "Moisture marks on paper or touchscreens",
+        ],
+        practicalOptions: [
+          "First steps: clinical-strength antiperspirant applied at night; absorbent wipes during the day",
+          "Temporary control: wearing breathable gloves can reduce visible moisture during tasks",
+          "If persistent: iontophoresis is commonly used for hands (several sessions weekly, then maintenance)",
         ],
       },
       plantar: {
         key: "plantar",
-        title: "Plantar (Feet)",
+        title: "🦶 Plantar (Feet)",
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-indigo-100 text-indigo-900 dark:bg-indigo-900/30 dark:text-indigo-100",
@@ -55,15 +61,20 @@ export function ClickableHHDiagram() {
           color: "#818cf8",
           border: "none",
         },
-        bullets: [
-          "Breathable shoes/socks can help",
-          "Rotate shoes, use moisture-wicking socks",
-          "Iontophoresis can also be used for feet",
+        commonSigns: [
+          "Damp socks shortly after putting them on",
+          "Slippery sensation in shoes; wet footprints",
+          "Increased odor due to moisture buildup",
+        ],
+        practicalOptions: [
+          "First steps: foot-specific antiperspirant at night; moisture-wicking socks",
+          "Daily management: rotate shoes; use absorbent foot powders",
+          "If persistent: iontophoresis can also be used for feet",
         ],
       },
       axillary: {
         key: "axillary",
-        title: "Axillary (Underarms)",
+        title: "💪 Axillary (Underarms)",
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-rose-100 text-rose-900 dark:bg-rose-900/30 dark:text-rose-100",
@@ -72,15 +83,20 @@ export function ClickableHHDiagram() {
           color: "#fb7185",
           border: "none",
         },
-        bullets: [
-          "Night application of antiperspirant is common",
-          "Loose/breathable layers can reduce discomfort",
-          "Some people discuss in-office options with clinicians",
+        commonSigns: [
+          "Visible sweat stains unrelated to heat or activity",
+          "Soaking through shirts quickly",
+          "Social anxiety related to clothing choices",
+        ],
+        practicalOptions: [
+          "First steps: clinical-strength antiperspirant applied nightly",
+          "Clothing strategies: breathable fabrics; sweat shields",
+          "If persistent: in-office treatments such as botulinum toxin injections may reduce sweating for months",
         ],
       },
       craniofacial: {
         key: "craniofacial",
-        title: "Craniofacial (Face & Scalp)",
+        title: "😊 Craniofacial (Face/Scalp)",
         subtitle: "Common signs & practical options",
         colorClass:
           "bg-amber-100 text-amber-900 dark:bg-amber-900/30 dark:text-amber-100",
@@ -89,10 +105,15 @@ export function ClickableHHDiagram() {
           color: "#fbbf24",
           border: "none",
         },
-        bullets: [
-          "Triggers can include heat, stress, spicy food",
-          "Cooling strategies: fans, cold water, breathable hats",
-          "If new/sudden or severe, consider medical evaluation",
+        commonSigns: [
+          "Beads of sweat on forehead, upper lip, or scalp",
+          "Dripping sweat during mild stress or conversation",
+          "Makeup or hairstyle disruption",
+        ],
+        practicalOptions: [
+          "First steps: lightweight topical antiperspirant (carefully applied to hairline/forehead at night)",
+          "Daytime control: blotting papers, headbands, cooling strategies",
+          "If persistent: prescription topical agents or medical consultation for tailored treatment",
         ],
       },
     }),
@@ -110,19 +131,22 @@ export function ClickableHHDiagram() {
     <div className="mt-4">
       <div className="rounded-xl border border-sky-200/60 bg-white/60 p-3 dark:border-sky-800/40 dark:bg-slate-900/40">
         <p className="mb-3 text-xs text-muted-foreground">
-          Click an area on the diagram to see quick info and common options.
+          Click below to see quick info and common options.
         </p>
 
-        {/* Diagram wrapper MUST have size */}
-        <div className="relative mx-auto w-full max-w-2xl overflow-hidden rounded-xl border border-sky-200/60 bg-sky-50/30 dark:border-sky-800/40 dark:bg-slate-800/30">
-          <Image
-            src="/images/hyperhidrosis-diagram.png"
-            alt="Hyperhidrosis diagram"
-            width={600}
-            height={350}
-            className="h-auto w-full select-none"
-            priority
-          />
+        {/* Diagram wrapper */}
+        <div className="flex justify-center">
+          <div className="relative mx-auto w-auto max-w-2xl overflow-hidden rounded-xl border border-sky-200/60 bg-sky-50/30 dark:border-sky-800/40 dark:bg-slate-800/30">
+            <Image
+              src="/images/hyperhidrosis-diagram.png"
+              alt="Hyperhidrosis diagram"
+              width={300}
+              height={175}
+              className="h-auto w-auto select-none"
+              priority
+            />
+        </div>
+
 
           {/* Clickable hotspots */}
           <button
@@ -151,7 +175,7 @@ export function ClickableHHDiagram() {
           />
         </div>
 
-        {/* Manual buttons with inline styles */}
+        {/* Manual buttons */}
         <div className="mt-3 flex flex-wrap gap-2">
           <button
             onClick={() => openArea("palmar")}
@@ -191,16 +215,30 @@ export function ClickableHHDiagram() {
           </DialogHeader>
 
           {info ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${info.colorClass}`}>
                 {info.subtitle}
               </div>
 
-              <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
-                {info.bullets.map((b) => (
-                  <li key={b}>{b}</li>
-                ))}
-              </ul>
+              {/* Common Signs Section */}
+              <div>
+                <h4 className="mb-2 text-sm font-semibold">Common signs</h4>
+                <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+                  {info.commonSigns.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Practical Options Section */}
+              <div>
+                <h4 className="mb-2 text-sm font-semibold">Practical options</h4>
+                <ul className="list-disc space-y-2 pl-5 text-sm text-muted-foreground">
+                  {info.practicalOptions.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
 
               <p className="text-xs text-muted-foreground">
                 Educational info only — not medical advice.

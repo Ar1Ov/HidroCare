@@ -71,21 +71,6 @@ export default function AboutHyperhidrosisPage() {
             <CardTitle>Common Areas Affected</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm text-muted-foreground">
-            <ul className="list-disc space-y-2 pl-5">
-              <li>
-                <strong className="text-emerald-700 dark:text-emerald-300">Palmar</strong> – Hands
-              </li>
-              <li>
-                <strong className="text-indigo-700 dark:text-indigo-300">Plantar</strong> – Feet
-              </li>
-              <li>
-                <strong className="text-rose-700 dark:text-rose-300">Axillary</strong> – Underarms
-              </li>
-              <li>
-                <strong className="text-amber-700 dark:text-amber-300">Craniofacial</strong> – Face &amp; scalp
-              </li>
-            </ul>
-
             <ClickableHHDiagram />
           </CardContent>
         </Card>
