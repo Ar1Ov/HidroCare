@@ -50,11 +50,6 @@ export function NoteForm({ note, mode }: NoteFormProps) {
 	// ... rest
   });
   
-  // When building content, keep date as string (not new Date)
-  const buildContent = () => ({
-	date: formData.date, // Keep as "YYYY-MM-DD" string, don't convert to Date
-	// ... rest
-  });
 
   const [areaData, setAreaData] = useState(
     (existingContent as any)?.areas ||

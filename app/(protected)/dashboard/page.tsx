@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NoteList } from "@/components/notes/note-list";
 
-
 export default async function DashboardPage() {
     const supabase = await createClient();
 

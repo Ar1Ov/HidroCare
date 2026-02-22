@@ -40,7 +40,7 @@ export function Header({ userEmail }: HeaderProps) {
 						className="gap-2 text-sky-700 dark:text-sky-300"
 					>
 						<BookOpen className="h-4 w-4" />
-						<span className="hidden sm:inline">About</span>
+						<span className="hidden sm:inline">Understanding HyperHidrosis</span>
 						</Button>
 					</Link>
 					<Link href="/latest-news">
