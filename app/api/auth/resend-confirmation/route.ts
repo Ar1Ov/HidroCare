@@ -6,12 +6,12 @@ const schema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
     const supabase = await createClient();
-    const body = await req.json();
-    const parsed = schema.safeParse(body);
+    const body = await request.json();
 
+    const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0].message },
@@ -19,15 +19,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const email = parsed.data.email;
-
-    // Important: use your real site URL (prod) so the email link doesn't go to localhost
-    const emailRedirectTo = `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`;
+    const { email } = parsed.data;
 
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,
-      options: { emailRedirectTo },
+      options: {
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
+      },
     });
 
     if (error) {
