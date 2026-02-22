@@ -114,11 +114,50 @@ export function SweatChartDialog() {
                 <Tooltip labelFormatter={(v) => `Date: ${v}`} />
                 <Legend />
 
-                <Line type="monotone" dataKey="palms" dot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="feet" dot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="underarms" dot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="face" dot={false} strokeWidth={2} />
-                <Line type="monotone" dataKey="other" dot={false} strokeWidth={2} />
+                <Line
+  type="monotone"
+  dataKey="palms"
+  name="Hands"
+  dot={false}
+  stroke="#059669"
+  strokeWidth={3}
+/>
+
+<Line
+  type="monotone"
+  dataKey="feet"
+  name="Feet"
+  dot={false}
+  stroke="#4F46E5"
+  strokeWidth={3}
+/>
+
+<Line
+  type="monotone"
+  dataKey="underarms"
+  name="Underarms"
+  dot={false}
+  stroke="#E11D48"
+  strokeWidth={3}
+/>
+
+<Line
+  type="monotone"
+  dataKey="face"
+  name="Face / Scalp"
+  dot={false}
+  stroke="#D97706"
+  strokeWidth={3}
+/>
+
+<Line
+  type="monotone"
+  dataKey="other"
+  name="Other"
+  dot={false}
+  stroke="#6B7280"
+  strokeWidth={3}
+/>
               </LineChart>
             </ResponsiveContainer>
           </div>
