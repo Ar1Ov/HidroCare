@@ -145,35 +145,8 @@ export function ClickableHHDiagram() {
               className="h-auto w-auto select-none"
               priority
             />
-        </div>
-
-
-          {/* Clickable hotspots */}
-          <button
-            type="button"
-            aria-label="Palmar (hands)"
-            onClick={() => openArea("palmar")}
-            className="absolute left-[18%] top-[58%] h-[16%] w-[14%] rounded-lg ring-2 ring-transparent hover:ring-emerald-400 focus:outline-none focus:ring-emerald-400"
-          />
-          <button
-            type="button"
-            aria-label="Plantar (feet)"
-            onClick={() => openArea("plantar")}
-            className="absolute left-[44%] top-[78%] h-[16%] w-[12%] rounded-lg ring-2 ring-transparent hover:ring-indigo-400 focus:outline-none focus:ring-indigo-400"
-          />
-          <button
-            type="button"
-            aria-label="Axillary (underarms)"
-            onClick={() => openArea("axillary")}
-            className="absolute left-[30%] top-[34%] h-[18%] w-[16%] rounded-lg ring-2 ring-transparent hover:ring-rose-400 focus:outline-none focus:ring-rose-400"
-          />
-          <button
-            type="button"
-            aria-label="Craniofacial (face and scalp)"
-            onClick={() => openArea("craniofacial")}
-            className="absolute left-[50%] top-[10%] h-[18%] w-[16%] rounded-lg ring-2 ring-transparent hover:ring-amber-400 focus:outline-none focus:ring-amber-400"
-          />
-        </div>
+        </div>    
+      </div>
 
         {/* Manual buttons */}
         <div className="mt-3 flex flex-wrap gap-2">
