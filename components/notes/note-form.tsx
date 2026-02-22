@@ -11,12 +11,25 @@ import { createClient } from "@/lib/supabase/client";
 import { useAutoSave } from "@/lib/hooks/use-auto-save";
 import { SaveStatusIndicator } from "./save-status-indicator";
 import { DeleteNoteButton } from "./delete-note-button";
-import { Tables } from "@/lib/supabase/database.types";
+import type { Tables } from "@/types/supabase";
 
 interface NoteFormProps {
   note?: Tables<"notes">;
   mode: "create" | "edit";
 }
+
+type AreaEntry = {
+	area: string;
+	severity: number;
+	triggers: string[]; // ✅ important
+	duration: string;
+  };
+
+  type FormData = {
+	date: string;       // or Date, depending on your input
+	timeOfDay: string;  // e.g. "morning" | "afternoon" | "evening" | "night"
+	notes: string; 
+  };
 
 const AREAS = [
   { id: "palms", label: "Palms", emoji: "🖐️" },
@@ -45,17 +58,6 @@ export function NoteForm({ note, mode }: NoteFormProps) {
     note?.title || `Log Entry - ${new Date().toISOString().split("T")[0]}`
   );
   // Replace the date state handling to store as string directly
-  type AreaData = {
-	area: string;
-	severity: number;
-	triggers: string[]; // ✅ important
-  };
-
-  type FormData = {
-	date: string;       // or Date, depending on your input
-	timeOfDay: string;  // e.g. "morning" | "afternoon" | "evening" | "night"
-	notes: string; 
-  };
 
   const [formData, setFormData] = useState<FormData>({
 	date: new Date().toISOString().slice(0, 10),
@@ -63,14 +65,15 @@ export function NoteForm({ note, mode }: NoteFormProps) {
 	notes: "",
   });
 
-  const [areaData, setAreaData] = useState(
-    (existingContent as any)?.areas ||
-      AREAS.map((area) => ({
-        area: area.id,
-        severity: 0,
-        triggers: [] as string[],
-        duration: "",
-      }))
+  const [areaData, setAreaData] = useState<AreaEntry[]>(
+	Array.isArray((existingContent as any)?.areas)
+	  ? (existingContent as any).areas
+	  : AREAS.map((area) => ({
+		  area: area.id,
+		  severity: 0,
+		  triggers: [] as string[],
+		  duration: "",
+		}))
   );
 
   const [stressData, setStressData] = useState(
