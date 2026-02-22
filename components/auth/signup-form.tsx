@@ -111,6 +111,22 @@ export function SignupForm() {
 						{isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 						Create account
 					</Button>
+					<Button
+  type="button"
+  variant="secondary"
+  onClick={async () => {
+    const res = await fetch("/api/auth/resend-confirmation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || "Failed to resend");
+    // show toast: json.message
+  }}
+>
+  Resend confirmation email
+</Button>
 					<p className="text-sm text-muted-foreground text-center">
 						Already have an account?{" "}
 						<Link href="/login" className="text-primary hover:underline">
