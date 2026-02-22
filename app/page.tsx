@@ -26,9 +26,11 @@ export default function HomePage() {
 				<div className="container flex flex-col items-center text-center gap-8">
 					<div className="space-y-4 max-w-2xl">
 						<h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-							Your log,
+							Your Log.
 							<br />
-							<span className="text-primary">Take control of hyperhidrosis</span>
+							<span className="text-primary">
+  Take control of <span className="font-bold text-blue-600 dark:text-blue-400">your</span> hyperhidrosis
+</span>
 						</h1>
 						<p className="text-lg text-muted-foreground max-w-lg mx-auto">
 						A personalized hyperhidrosis support platform. Track symptoms,
