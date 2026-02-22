@@ -42,7 +42,7 @@ export function DailyLogForm() {
   const [areaData, setAreaData] = useState(
     AREAS.map((area) => ({
       area: area.id,
-      severity: 5,
+      severity: 0,
       triggers: [] as string[],
       duration: "",
     }))
@@ -78,33 +78,14 @@ export function DailyLogForm() {
 
     const { error } = await supabase.from("notes").insert({
       content: noteContent,
+      title: `Log Entry - ${formData.date}`,
     });
 
-    if (!error) {
-      // Reset form
-      setFormData({
-        date: new Date().toISOString().split("T")[0],
-        timeOfDay: "",
-        notes: "",
-      });
-      setAreaData(
-        AREAS.map((area) => ({
-          area: area.id,
-          severity: 5,
-          triggers: [],
-          duration: "",
-        }))
-      );
-      setStressData({
-        anxiety: 0,
-        socialImpact: 0,
-        workImpact: 0,
-        confidenceImpact: 0,
-      });
-      setSelectedTriggers([]);
-      setEpisodes("");
-      setEpisodeTiming("");
-      setEpisodeType("");
+    if (error) {
+      console.error("Error saving log:", error);
+      alert("Error saving log entry. Please try again.");
+    } else {
+      alert("Log entry saved successfully!");
     }
 
     setIsLoading(false);
@@ -118,12 +99,37 @@ export function DailyLogForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Date Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle>📅 Select Date</CardTitle>
+          <CardDescription>
+            Choose the date for this log entry
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <Label htmlFor="date">Date:</Label>
+            <Input
+              id="date"
+              type="date"
+              value={formData.date}
+              onChange={(e) =>
+                setFormData({ ...formData, date: e.target.value })
+              }
+              className="w-auto"
+              required
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Daily Sweat Log */}
       <Card>
         <CardHeader>
           <CardTitle>1️⃣ Daily Sweat Log</CardTitle>
           <CardDescription>
-            Rate each area for sweat severity today and note triggers.
+            Rate each area for sweat severity on {formData.date} and note triggers.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -150,7 +156,7 @@ export function DailyLogForm() {
                     max="10"
                     value={areaData[index].severity}
                     onChange={(e) =>
-                      updateAreaData(index, "severity", parseInt(e.target.value))
+                      updateAreaData(index, "severity", parseInt(e.target.value) || 0)
                     }
                     className="w-20"
                   />
@@ -220,8 +226,8 @@ export function DailyLogForm() {
             { key: "workImpact", label: "Sweating affected my work or school performance today" },
             { key: "confidenceImpact", label: "Sweating affected my confidence or self-esteem today" },
           ].map((item) => (
-            <div key={item.key} className="flex items-center justify-between">
-              <Label className="w-3/4">{item.label}</Label>
+            <div key={item.key} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <Label className="w-full sm:w-3/4">{item.label}</Label>
               <div className="flex gap-1">
                 {[0, 1, 2, 3, 4, 5].map((num) => (
                   <button
@@ -230,10 +236,10 @@ export function DailyLogForm() {
                     onClick={() =>
                       setStressData({ ...stressData, [item.key]: num })
                     }
-                    className={`h-8 w-8 rounded-full border-2 ${
+                    className={`h-8 w-8 rounded-full border-2 text-sm ${
                       stressData[item.key as keyof typeof stressData] === num
                         ? "border-primary bg-primary text-primary-foreground"
-                        : "border-slate-300"
+                        : "border-slate-300 hover:border-primary"
                     }`}
                   >
                     {num}
@@ -249,14 +255,14 @@ export function DailyLogForm() {
       <Card>
         <CardHeader>
           <CardTitle>3️⃣ Trigger Questionnaire</CardTitle>
-          <CardDescription>Check all that applied today</CardDescription>
+          <CardDescription>Check all that applied on {formData.date}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
             {TRIGGERS.map((trigger) => (
               <label
                 key={trigger}
-                className="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2"
+                className="flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800"
               >
                 <input
                   type="checkbox"
@@ -282,27 +288,28 @@ export function DailyLogForm() {
           <CardTitle>4️⃣ Frequency & Patterns</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Label>How many excessive sweating episodes today?</Label>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <Label className="w-full sm:w-64">How many excessive sweating episodes?</Label>
             <Input
               type="number"
               className="w-24"
               value={episodes}
               onChange={(e) => setEpisodes(e.target.value)}
+              placeholder="0"
             />
           </div>
-          <div className="flex items-center gap-4">
-            <Label>Mostly occurred:</Label>
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <Label className="w-full sm:w-64">Mostly occurred:</Label>
+            <div className="flex flex-wrap gap-2">
               {["Morning", "Afternoon", "Evening", "Night"].map((time) => (
                 <button
                   key={time}
                   type="button"
                   onClick={() => setEpisodeTiming(time)}
-                  className={`rounded-lg border px-3 py-1 ${
+                  className={`rounded-lg border px-3 py-1 text-sm ${
                     episodeTiming === time
                       ? "border-primary bg-primary text-primary-foreground"
-                      : ""
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
                   {time}
@@ -310,18 +317,18 @@ export function DailyLogForm() {
               ))}
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <Label>Were episodes:</Label>
-            <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <Label className="w-full sm:w-64">Were episodes:</Label>
+            <div className="flex flex-wrap gap-2">
               {["Sudden onset", "Gradual", "Continuous"].map((type) => (
                 <button
                   key={type}
                   type="button"
                   onClick={() => setEpisodeType(type)}
-                  className={`rounded-lg border px-3 py-1 ${
+                  className={`rounded-lg border px-3 py-1 text-sm ${
                     episodeType === type
                       ? "border-primary bg-primary text-primary-foreground"
-                      : ""
+                      : "hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
                   {type}
@@ -339,9 +346,9 @@ export function DailyLogForm() {
         </CardHeader>
         <CardContent>
           <textarea
-            className="w-full rounded-lg border p-3"
+            className="w-full rounded-lg border p-3 text-sm"
             rows={4}
-            placeholder="Any other observations..."
+            placeholder="Any other observations for this date..."
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           />
@@ -350,8 +357,8 @@ export function DailyLogForm() {
 
       {/* Submit Button */}
       <div className="flex justify-end">
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Saving..." : "Save Log Entry"}
+        <Button type="submit" disabled={isLoading} size="lg">
+          {isLoading ? "Saving..." : `Save Log Entry for ${formData.date}`}
         </Button>
       </div>
     </form>
