@@ -17,7 +17,6 @@ const AREAS = [
 ];
 
 export function NoteCard({ note }: NoteCardProps) {
-  // Parse the content JSON
   const content = typeof note.content === "string" 
     ? JSON.parse(note.content) 
     : note.content;
@@ -34,23 +33,10 @@ export function NoteCard({ note }: NoteCardProps) {
         year: "numeric",
       });
 
-  // Get severity for each area
-  const getSeverityColor = (severity: number) => {
-    if (severity >= 8) return "bg-red-500";
-    if (severity >= 5) return "bg-yellow-500";
-    if (severity > 0) return "bg-green-500";
-    return "bg-slate-300";
-  };
-
-  const getSeverityTextColor = (severity: number) => {
-    if (severity >= 8) return "text-red-600 dark:text-red-400";
-    if (severity >= 5) return "text-yellow-600 dark:text-yellow-400";
-    if (severity > 0) return "text-green-600 dark:text-green-400";
-    return "text-slate-400";
-  };
+  const areas = content?.areas || [];
+  const stress = content?.stress || {};
 
   // Calculate average severity
-  const areas = content?.areas || [];
   const avgSeverity = areas.length > 0
     ? Math.round(areas.reduce((sum: number, a: any) => sum + (a.severity || 0), 0) / areas.length)
     : 0;
@@ -61,7 +47,6 @@ export function NoteCard({ note }: NoteCardProps) {
   const topTriggers = uniqueTriggers.slice(0, 3);
 
   // Get stress score
-  const stress = content?.stress || {};
   const stressScore = Math.round(
     ((stress.anxiety || 0) + 
     (stress.socialImpact || 0) + 
@@ -69,44 +54,69 @@ export function NoteCard({ note }: NoteCardProps) {
     (stress.confidenceImpact || 0)) / 4
   );
 
+  // Get severity color
+  const getSeverityColor = (severity: number): string => {
+    if (severity >= 8) return "#ef4444"; // red-500
+    if (severity >= 5) return "#eab308"; // yellow-500
+    if (severity > 0) return "#22c55e"; // green-500
+    return "#94a3b8"; // slate-400
+  };
+
+  // Get background color class
+  const getSeverityBgClass = (severity: number): string => {
+    if (severity >= 8) return "bg-red-500";
+    if (severity >= 5) return "bg-yellow-500";
+    if (severity > 0) return "bg-green-500";
+    return "bg-slate-300";
+  };
+
+  // Get text color class
+  const getSeverityTextClass = (severity: number): string => {
+    if (severity >= 8) return "text-red-600 dark:text-red-400";
+    if (severity >= 5) return "text-yellow-600 dark:text-yellow-400";
+    if (severity > 0) return "text-green-600 dark:text-green-400";
+    return "text-slate-400";
+  };
+
   return (
     <Link href={`/notes/${note.id}`}>
       <Card className="h-full transition-colors cursor-pointer hover:bg-muted/50">
         <CardHeader className="pb-2">
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle className="text-lg line-clamp-1">
-                📅 {logDate}
-              </CardTitle>
-              <p className="text-xs text-muted-foreground mt-1">
-                {content?.timeOfDay || "All day"}
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">📅</span>
+              <CardTitle className="text-lg">{logDate}</CardTitle>
             </div>
-            {/* Overall severity badge */}
-            <div className={`px-3 py-1 rounded-full text-white text-sm font-bold ${getSeverityColor(avgSeverity)}`}>
+            <div className={`px-3 py-1 rounded-full text-white text-sm font-bold ${getSeverityBgClass(avgSeverity)}`}>
               {avgSeverity}/10
             </div>
           </div>
+          {content?.timeOfDay && (
+            <p className="text-xs text-muted-foreground">{content.timeOfDay}</p>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Severity bars for each area */}
-          <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          <div>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
               Sweat Severity
             </p>
-            <div className="grid grid-cols-5 gap-1">
+            <div className="flex gap-2">
               {AREAS.map((area) => {
                 const areaData = areas.find((a: any) => a.area === area.id) || {};
                 const severity = areaData.severity || 0;
+                const height = Math.max(severity * 4, 8); // Minimum height of 8px
+                
                 return (
-                  <div key={area.id} className="text-center">
+                  <div key={area.id} className="flex-1 flex flex-col items-center gap-1">
                     <div 
-                      className={`h-12 rounded-md flex items-end justify-center pb-1 ${getSeverityColor(severity)}`}
-                      style={{ opacity: severity > 0 ? 0.8 : 0.3 }}
-                    >
-                      <span className="text-xs font-bold text-white">{severity}</span>
-                    </div>
-                    <span className="text-xs">{area.emoji}</span>
+                      className={`w-full rounded-t ${getSeverityBgClass(severity)}`}
+                      style={{ height: `${height}px`, minHeight: "8px" }}
+                    />
+                    <span className="text-lg">{area.emoji}</span>
+                    <span className={`text-xs font-bold ${getSeverityTextClass(severity)}`}>
+                      {severity}
+                    </span>
                   </div>
                 );
               })}
@@ -114,13 +124,13 @@ export function NoteCard({ note }: NoteCardProps) {
           </div>
 
           {/* Triggers */}
-          {topTriggers.length > 0 && (
+          {uniqueTriggers.length > 0 && (
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                 Main Triggers
               </p>
               <div className="flex flex-wrap gap-1">
-                {topTriggers.map((trigger: string) => (
+                {uniqueTriggers.map((trigger: string) => (
                   <span 
                     key={trigger} 
                     className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-xs"
@@ -132,33 +142,48 @@ export function NoteCard({ note }: NoteCardProps) {
             </div>
           )}
 
-          {/* Stress & Emotional Impact */}
+          {/* Emotional Impact */}
           {stressScore > 0 && (
-            <div className="flex items-center gap-2">
-              <p className="text-xs font-medium text-muted-foreground">
-                Emotional impact:
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                Emotional Impact
               </p>
-              <div className="flex gap-0.5">
-                {[1, 2, 3, 4, 5].map((level) => (
-                  <div
-                    key={level}
-                    className={`h-2 w-4 rounded-sm ${
-                      level <= stressScore ? "bg-rose-400" : "bg-slate-200 dark:bg-slate-700"
-                    }`}
-                  />
-                ))}
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((level) => (
+                    <div
+                      key={level}
+                      className={`h-3 w-6 rounded-sm ${
+                        level <= stressScore ? "bg-rose-400" : "bg-slate-200 dark:bg-slate-700"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {stressScore}/5
+                </span>
               </div>
-              <span className="text-xs text-muted-foreground">
-                {stressScore}/5
-              </span>
             </div>
           )}
 
-          {/* Episodes count */}
+          {/* Episodes info */}
           {content?.episodes && (
             <div className="text-xs text-muted-foreground">
-              📊 {content.episodes} episode{content.episodes !== "1" ? "s" : ""} 
+              <span className="font-medium">Episodes:</span> {content.episodes}
               {content.episodeTiming && ` • ${content.episodeTiming}`}
+              {content.episodeType && ` • ${content.episodeType}`}
+            </div>
+          )}
+
+          {/* Additional Notes */}
+          {content?.notes && (
+            <div className="pt-2 border-t">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                Notes
+              </p>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {content.notes}
+              </p>
             </div>
           )}
         </CardContent>
