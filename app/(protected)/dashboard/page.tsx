@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NoteList } from "@/components/notes/note-list";
+import { SweatChartDialog } from "@/components/dashboard/sweat-chart-dialog";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -22,6 +23,9 @@ export default async function DashboardPage() {
         <p className="mt-2 opacity-90">
           Track your hyperhidrosis symptoms and monitor your progress over time.
         </p>
+		<div className="mt-4">
+          <SweatChartDialog />
+        </div>
       </div>
 
       {/* Notes in Chronological Order */}
