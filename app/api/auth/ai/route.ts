@@ -298,19 +298,22 @@ export async function POST(req: Request) {
     });
 
     const reply = getResponseText(response);
+    if (!reply) {
+      console.warn("EMPTY AI TEXT. Raw response:", JSON.stringify(response, null, 2));
+    }
 
     // ✅ If parsing fails, DON'T show the scary empty-content message; fall back to preset-style text
-    if (!reply) {
-      return Response.json({
-        reply: freeModeResponse(trimmed),
-        fallback: true,
-        source: "ai_empty",
-        cached: false,
-        fallbackMessage:
-          "⚠ AI response was empty. Showing a standard help answer instead.",
-        reason: "empty_ai",
-      });
-    }
+    //if (!reply) {
+     // return Response.json({
+       // reply: freeModeResponse(trimmed),
+       // fallback: true,
+      //  source: "ai_empty",
+      //  cached: false,
+      //  fallbackMessage:
+      //    "⚠ AI response was empty. Showing a standard help answer instead.",
+      //  reason: "empty_ai",
+     // });
+   // }
 
     // ✅ 5) Reconcile usage (best effort)
     const realIn = response?.usage?.input_tokens ?? estInputTokens;
