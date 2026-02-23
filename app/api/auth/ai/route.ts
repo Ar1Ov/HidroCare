@@ -232,17 +232,39 @@ export async function POST(req: Request) {
     const safeMaxOut = Math.max(64, MAX_OUTPUT_TOKENS);
 
     const response = await openai.responses.create({
-      model,
+      model: model,
       input: [
-        "SYSTEM: You are a friendly and supportive hyperhidrosis education assistant. ",
-        "Give calm, practical guidance and coping strategies. ",
-        "Do NOT diagnose, and do NOT prescribe medication. ",
-        "If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly. ",
-        "Keep replies concise (under ~8 sentences) unless the user asks for more.\n\n",
-        `USER: ${trimmed}`,
-      ].join(""),
+        {
+          role: "system",
+          content:
+            "You are a friendly and supportive hyperhidrosis education assistant. Give calm, practical guidance and coping strategies. Do NOT diagnose or prescribe medication. If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly. Keep replies concise (under ~8 sentences).",
+        },
+        {
+          role: "user",
+          content: trimmed,
+        },
+      ],
       max_output_tokens: safeMaxOut,
     });
+    
+    let reply = "";
+    
+    // Most reliable extraction
+    if (response.output?.length) {
+      for (const block of response.output) {
+        for (const part of block.content ?? []) {
+          if (part.type === "output_text" && part.text) {
+            reply += part.text;
+          }
+        }
+      }
+    }
+    
+    reply = reply.trim();
+
+    if (!reply) {
+      reply = "⚠ AI returned empty content.";
+    }
 
     const reply = getResponseText(response);
 
