@@ -76,13 +76,12 @@ This information is educational, not medical advice.
 }
 
 export async function POST(req: Request) {
-  // Make message available to the catch block for fallback
   let userMessage = "";
 
   try {
     const supabase = await createClient();
 
-    // Require logged-in user (keeps abuse down)
+    // Require logged-in user
     const {
       data: { user },
       error: userErr,
@@ -111,6 +110,7 @@ export async function POST(req: Request) {
     if (!trimmed) {
       return Response.json({ error: "Message is required" }, { status: 400 });
     }
+
     if (trimmed.length > MAX_INPUT_CHARS) {
       return Response.json(
         { error: `Message too long. Max ${MAX_INPUT_CHARS} characters.` },
@@ -118,30 +118,33 @@ export async function POST(req: Request) {
       );
     }
 
-    // Daily bucketing (UTC) for consistent limits
+    // Daily bucketing (UTC)
     const dayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-    // Reserve worst-case BEFORE calling OpenAI (prevents budget spikes)
+    // Reserve worst-case BEFORE calling OpenAI
     const estInputTokens = roughTokenEstimate(trimmed) + 200; // system buffer
     const estOutputTokens = MAX_OUTPUT_TOKENS;
 
-    // NOTE: cast supabase to any so TypeScript doesn't fail builds until you regenerate DB types
-    const { data: gate, error: gateErr } = await (supabase as any)
-      .rpc("ai_check_and_increment", {
-        p_user_id: user.id,
-        p_day: dayStr,
-        p_daily_message_limit: DAILY_LIMIT,
-        p_daily_cost_cents_limit: DAILY_COST_CENTS_LIMIT,
-        p_add_messages: 1,
-        p_add_input_tokens: estInputTokens,
-        p_add_output_tokens: estOutputTokens,
-        p_min_seconds_between_requests: MIN_SECONDS_BETWEEN_REQUESTS,
-      })
-      .single<GateResult>();
+    // Cast supabase to any ONLY for rpc typing (until you regen types)
+    const rpc = (supabase as any).rpc.bind(supabase as any);
 
+    const gateResp = await rpc("ai_check_and_increment", {
+      p_user_id: user.id,
+      p_day: dayStr,
+      p_daily_message_limit: DAILY_LIMIT,
+      p_daily_cost_cents_limit: DAILY_COST_CENTS_LIMIT,
+      p_add_messages: 1,
+      p_add_input_tokens: estInputTokens,
+      p_add_output_tokens: estOutputTokens,
+      p_min_seconds_between_requests: MIN_SECONDS_BETWEEN_REQUESTS,
+    }).single();
+
+    const gateErr = gateResp?.error as { message?: string } | null;
     if (gateErr) {
-      return Response.json({ error: gateErr.message }, { status: 500 });
+      return Response.json({ error: gateErr.message || "Limiter error" }, { status: 500 });
     }
+
+    const gate = (gateResp?.data ?? null) as GateResult | null;
     if (!gate) {
       return Response.json({ error: "Limiter returned no data." }, { status: 500 });
     }
@@ -186,7 +189,7 @@ export async function POST(req: Request) {
 
     const reply = response.output_text ?? "";
 
-    // Reconcile actual usage if higher than reservation
+    // Reconcile actual usage if higher than reservation (charge delta only)
     const realIn = response.usage?.input_tokens ?? estInputTokens;
     const realOut = response.usage?.output_tokens ?? estOutputTokens;
 
@@ -194,23 +197,8 @@ export async function POST(req: Request) {
     const deltaOut = Math.max(0, realOut - estOutputTokens);
 
     if (deltaIn > 0 || deltaOut > 0) {
-      await (supabase as any).rpc("ai_check_and_increment", {
-        p_user_id: user.id,
-        p_day: dayStr,
-        p_daily_message_limit: DAILY_LIMIT,
-        p_daily_cost_cents_limit: DAILY_COST_CENTS_LIMIT,
-        p_add_messages: 0,
-        p_add_input_tokens: deltaIn,
-        p_add_output_tokens: deltaOut,
-        p_min_seconds_between_request: 0, // harmless if ignored by SQL, but keep param name correct below
-      });
-    }
-
-    // IMPORTANT: correct param name (must match SQL function arg)
-    // Some Supabase clients silently ignore unknown keys, so we do a second safe call if needed.
-    // If your SQL expects p_min_seconds_between_requests, keep it as that:
-    if (deltaIn > 0 || deltaOut > 0) {
-      await (supabase as any).rpc("ai_check_and_increment", {
+      // best effort; if this fails, it's not fatal to user response
+      await rpc("ai_check_and_increment", {
         p_user_id: user.id,
         p_day: dayStr,
         p_daily_message_limit: DAILY_LIMIT,
