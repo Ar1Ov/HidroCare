@@ -254,6 +254,7 @@ export async function POST(req: Request) {
     return Response.json({
       reply,
       remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
+      source: "gate",
       fallback: false,
       cached: false,
     });
@@ -266,6 +267,7 @@ export async function POST(req: Request) {
     return Response.json({
       reply: freeModeResponse(userMessage),
       fallback: true,
+      source: "catch",
       fallbackMessage:
         "⚠ You are currently in Fallback Mode. AI is unavailable or your daily AI tickets have been used.",
       reason: code || "ai_error",
