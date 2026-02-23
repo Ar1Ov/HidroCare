@@ -248,25 +248,30 @@ export async function POST(req: Request) {
     });
     
     let reply = "";
-    
-    // Most reliable extraction
-    if (response.output?.length) {
-      for (const block of response.output) {
-        for (const part of block.content ?? []) {
-          if (part.type === "output_text" && part.text) {
-            reply += part.text;
-          }
-        }
+
+// Most reliable extraction for Responses API
+if (response.output?.length) {
+  for (const block of response.output) {
+    for (const part of block.content ?? []) {
+      // Responses API uses { type: "output_text", text: "..." }
+      if (part?.type === "output_text" && typeof part.text === "string") {
+        reply += part.text;
       }
     }
-    
-    reply = reply.trim();
+  }
+}
 
-    if (!reply) {
-      reply = "⚠ AI returned empty content.";
-    }
+reply = reply.trim();
 
-    const reply = getResponseText(response);
+// Fallback extraction if the SDK populated output_text
+if (!reply && typeof (response as any)?.output_text === "string") {
+  reply = String((response as any).output_text).trim();
+}
+
+// Last resort so frontend never sees empty
+if (!reply) {
+  reply = "⚠ AI returned empty content.";
+}
 
     // Reconcile actual usage if higher than reservation (charge delta only)
     const realIn = response.usage?.input_tokens ?? estInputTokens;
