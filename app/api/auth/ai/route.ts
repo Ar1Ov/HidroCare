@@ -113,27 +113,44 @@ function isPresetQuestion(message: string): boolean {
   return false;
 }
 
+/**
+ * Robust across different OpenAI SDK response shapes.
+ * (Avoids touching typed fields like ResponseOutputItem.content)
+ */
 function getResponseText(r: any): string {
-  // The SDK usually populates this
-  const t = typeof r?.output_text === "string" ? r.output_text.trim() : "";
-  if (t) return t;
+  const ot = r?.output_text;
+  if (typeof ot === "string" && ot.trim()) return ot.trim();
 
-  // Extra-safe fallback (works even if typings differ)
+  const out = r?.output;
   const parts: string[] = [];
-  const output = r?.output;
-  if (Array.isArray(output)) {
-    for (const block of output) {
+
+  if (Array.isArray(out)) {
+    for (const block of out) {
       const content = (block as any)?.content;
-      if (Array.isArray(content)) {
-        for (const c of content) {
-          const text = (c as any)?.text ?? (c as any)?.value;
-          if (typeof text === "string" && text.trim()) parts.push(text.trim());
-        }
+      if (!Array.isArray(content)) continue;
+
+      for (const c of content) {
+        // 1) { type: "output_text", text: "..." }
+        if (typeof c?.text === "string" && c.text.trim()) parts.push(c.text.trim());
+
+        // 2) { text: { value: "..." } }
+        const v = c?.text?.value;
+        if (typeof v === "string" && v.trim()) parts.push(v.trim());
+
+        // 3) { value: "..." }
+        const val = c?.value;
+        if (typeof val === "string" && val.trim()) parts.push(val.trim());
       }
     }
   }
 
-  return parts.join("\n").trim();
+  const joined = parts.join("\n").trim();
+  if (joined) return joined;
+
+  const msg = r?.message?.content;
+  if (typeof msg === "string" && msg.trim()) return msg.trim();
+
+  return "";
 }
 
 export async function POST(req: Request) {
@@ -176,16 +193,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ 1) PRESETS FIRST (no limiter, no OpenAI)
-    if (isPresetQuestion(trimmed)) {
-      return Response.json({
-        reply: freeModeResponse(trimmed),
-        fallback: false,
-        source: "preset",
-      });
-    }
-
-    // Optional ping to verify OpenAI key + connectivity
+    // ✅ 0) PING FIRST (so you can test quickly even if presets match)
     if (trimmed === "__ping__") {
       const openai = new OpenAI({ apiKey });
       const r: any = await openai.responses.create({
@@ -196,6 +204,15 @@ export async function POST(req: Request) {
 
       const reply = getResponseText(r) || "OK";
       return Response.json({ reply, fallback: false, source: "ai_ping" });
+    }
+
+    // ✅ 1) PRESETS FIRST (no limiter, no OpenAI)
+    if (isPresetQuestion(trimmed)) {
+      return Response.json({
+        reply: freeModeResponse(trimmed),
+        fallback: false,
+        source: "preset",
+      });
     }
 
     // ✅ 2) LIMITER ONLY FOR NON-PRESET QUESTIONS
@@ -261,7 +278,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // ✅ 4) OPENAI CALL (string input is the most reliable with your current setup)
+    // ✅ 4) OPENAI CALL
     const openai = new OpenAI({ apiKey });
 
     const prompt = [
@@ -280,8 +297,20 @@ export async function POST(req: Request) {
       max_output_tokens: estOutputTokens,
     });
 
-    let reply = getResponseText(response);
-    if (!reply) reply = "⚠ AI returned empty content.";
+    const reply = getResponseText(response);
+
+    // ✅ If parsing fails, DON'T show the scary empty-content message; fall back to preset-style text
+    if (!reply) {
+      return Response.json({
+        reply: freeModeResponse(trimmed),
+        fallback: true,
+        source: "ai_empty",
+        cached: false,
+        fallbackMessage:
+          "⚠ AI response was empty. Showing a standard help answer instead.",
+        reason: "empty_ai",
+      });
+    }
 
     // ✅ 5) Reconcile usage (best effort)
     const realIn = response?.usage?.input_tokens ?? estInputTokens;
