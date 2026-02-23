@@ -4,8 +4,8 @@ import crypto from "crypto";
 
 const DAILY_LIMIT = 10; // tickets/day
 const DAILY_COST_CENTS_LIMIT = 50; // $0.50/day hard cap
-const MAX_INPUT_CHARS = 800; // keep small to control cost
-const MAX_OUTPUT_TOKENS = 150; // biggest cost lever (lower = cheaper)
+const MAX_INPUT_CHARS = 800;
+const MAX_OUTPUT_TOKENS = 150;
 const MIN_SECONDS_BETWEEN_REQUESTS = 2;
 
 type GateResult = {
@@ -16,12 +16,10 @@ type GateResult = {
 };
 
 function roughTokenEstimate(text: string) {
-  // ~4 chars/token heuristic (good enough for pre-reservation)
   return Math.ceil((text?.length ?? 0) / 4);
 }
 
 function hashPrompt(message: string, model: string) {
-  // Normalize to increase cache hit rate
   const normalized = message.trim().toLowerCase().replace(/[^\w\s]/g, "");
   return crypto.createHash("sha256").update(`${model}|${normalized}`).digest("hex");
 }
@@ -82,18 +80,34 @@ This information is educational, not medical advice.
 `.trim();
 }
 
-function getResponseText(r: any): string {
-  // Preferred field in newer SDK versions
-  if (typeof r?.output_text === "string" && r.output_text.trim()) {
-    return r.output_text.trim();
-  }
+/**
+ * Extract text from OpenAI Responses API result.
+ * We intentionally use `any` to avoid TS union issues on `response.output`.
+ */
+function getResponseText(resp: any): string {
+  // Many SDK versions provide this convenience:
+  const ot = resp?.output_text;
+  if (typeof ot === "string" && ot.trim()) return ot.trim();
 
-  // Fallback for structured output
   const parts: string[] = [];
-  for (const item of r?.output ?? []) {
-    for (const c of item?.content ?? []) {
-      const text = c?.text ?? c?.value ?? "";
-      if (typeof text === "string" && text.trim()) parts.push(text.trim());
+
+  const output = resp?.output;
+  if (Array.isArray(output)) {
+    for (const item of output) {
+      const content = item?.content;
+      if (!Array.isArray(content)) continue;
+
+      for (const part of content) {
+        // Typical shape: { type: "output_text", text: "..." }
+        if (part?.type === "output_text" && typeof part?.text === "string") {
+          parts.push(part.text);
+        }
+        // Some variants: { type: "text", text: { value: "..." } } etc.
+        const v = part?.text?.value ?? part?.text ?? part?.value;
+        if (typeof v === "string" && v.trim()) {
+          parts.push(v.trim());
+        }
+      }
     }
   }
 
@@ -115,10 +129,10 @@ export async function POST(req: Request) {
     if (userErr) return Response.json({ error: userErr.message }, { status: 401 });
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    // OpenAI key must exist (server-side only)
+    // OpenAI key (server-only)
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return Response.json({ error: "Missing OPENAI_API_KEY in .env.local" }, { status: 503 });
+      return Response.json({ error: "Missing OPENAI_API_KEY in env" }, { status: 503 });
     }
 
     // Parse input
@@ -132,7 +146,8 @@ export async function POST(req: Request) {
     const trimmed = message.trim();
     userMessage = trimmed;
 
-    // --- AI connectivity test (TEMP) ---
+    // ---- AI connectivity test (TEMP) ----
+    // Send "__ping__" from the UI to confirm OpenAI works.
     if (trimmed === "__ping__") {
       const openai = new OpenAI({ apiKey });
       const r = await openai.responses.create({
@@ -141,10 +156,13 @@ export async function POST(req: Request) {
         max_output_tokens: 64,
       });
 
-      const pingReply = getResponseText(r) || "OK";
-      return Response.json({ reply: pingReply, fallback: false, source: "ai_ping" });
+      return Response.json({
+        reply: getResponseText(r) || "OK",
+        fallback: false,
+        source: "ai_ping",
+      });
     }
-    // --- end test ---
+    // ---- end test ----
 
     if (!trimmed) {
       return Response.json({ error: "Message is required" }, { status: 400 });
@@ -157,14 +175,13 @@ export async function POST(req: Request) {
       );
     }
 
-    // Daily bucketing (UTC)
-    const dayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const dayStr = new Date().toISOString().slice(0, 10); // UTC YYYY-MM-DD
 
     // Reserve worst-case BEFORE calling OpenAI
-    const estInputTokens = roughTokenEstimate(trimmed) + 200; // system buffer
+    const estInputTokens = roughTokenEstimate(trimmed) + 200;
     const estOutputTokens = Math.max(64, MAX_OUTPUT_TOKENS);
 
-    // Cast supabase to any ONLY for rpc typing (until you regen types)
+    // Supabase RPC typing workaround until you regenerate DB types
     const rpc = (supabase as any).rpc.bind(supabase as any);
 
     const gateResp = await rpc("ai_check_and_increment", {
@@ -188,7 +205,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "Limiter returned no data." }, { status: 500 });
     }
 
-    // If tickets/budget ran out (or rate limited), fall back instead of hard-blocking
+    // If tickets/budget ran out (or rate limited), fall back
     if (!gate.allowed) {
       const reason = gate.reason || "limit";
       const fallbackMessage =
@@ -206,7 +223,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // ---- CACHE CHECK (after limiter, before OpenAI) ----
+    // ---- CACHE CHECK ----
     const model = "gpt-5-nano";
     const promptHash = hashPrompt(trimmed, model);
 
@@ -227,61 +244,33 @@ export async function POST(req: Request) {
     }
     // ---- END CACHE CHECK ----
 
-    // Call OpenAI (GPT-5 nano via Responses API)
+    // Call OpenAI
     const openai = new OpenAI({ apiKey });
-    const safeMaxOut = Math.max(64, MAX_OUTPUT_TOKENS);
 
     const response = await openai.responses.create({
-      model: model,
+      model,
       input: [
         {
           role: "system",
           content:
             "You are a friendly and supportive hyperhidrosis education assistant. Give calm, practical guidance and coping strategies. Do NOT diagnose or prescribe medication. If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly. Keep replies concise (under ~8 sentences).",
         },
-        {
-          role: "user",
-          content: trimmed,
-        },
+        { role: "user", content: trimmed },
       ],
-      max_output_tokens: safeMaxOut,
+      max_output_tokens: estOutputTokens,
     });
-    
-    let reply = "";
 
-// Most reliable extraction for Responses API
-if (response.output?.length) {
-  for (const block of response.output) {
-    for (const part of block.content ?? []) {
-      // Responses API uses { type: "output_text", text: "..." }
-      if (part?.type === "output_text" && typeof part.text === "string") {
-        reply += part.text;
-      }
-    }
-  }
-}
+    let reply = getResponseText(response);
+    if (!reply) reply = "⚠ AI returned empty content.";
 
-reply = reply.trim();
-
-// Fallback extraction if the SDK populated output_text
-if (!reply && typeof (response as any)?.output_text === "string") {
-  reply = String((response as any).output_text).trim();
-}
-
-// Last resort so frontend never sees empty
-if (!reply) {
-  reply = "⚠ AI returned empty content.";
-}
-
-    // Reconcile actual usage if higher than reservation (charge delta only)
+    // Reconcile actual usage (charge delta only)
     const realIn = response.usage?.input_tokens ?? estInputTokens;
-    const realOut = response.usage?.output_tokens ?? safeMaxOut;
+    const realOut = response.usage?.output_tokens ?? estOutputTokens;
 
     const deltaIn = Math.max(0, realIn - estInputTokens);
     const deltaOut = Math.max(0, realOut - estOutputTokens);
 
     if (deltaIn > 0 || deltaOut > 0) {
-      // best effort; if this fails, it's not fatal to user response
       await rpc("ai_check_and_increment", {
         p_user_id: user.id,
         p_day: dayStr,
@@ -294,7 +283,7 @@ if (!reply) {
       });
     }
 
-    // ---- CACHE WRITE (best-effort; never block user) ----
+    // ---- CACHE WRITE (best effort) ----
     try {
       await (supabase as any).from("ai_response_cache").insert({
         prompt_hash: promptHash,
