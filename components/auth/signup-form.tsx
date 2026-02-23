@@ -172,12 +172,12 @@ export function SignupForm() {
           <p className="text-sm text-muted-foreground text-center">
             Already have an account?{" "}
             <Link href="/login" className="text-primary hover:underline">
-              Sign in
-            </Link>
-            <Link href="/forgot-password" className="text-sm underline">
-              Forgot password?
+              Sign in 
             </Link>
           </p>
+          <Link href="/forgot-password" className="text-sm hover:underline">
+              Forgot password?
+            </Link>
         </CardFooter>
       </form>
     </Card>

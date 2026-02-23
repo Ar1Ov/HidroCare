@@ -51,7 +51,7 @@ export async function updateSession(request: NextRequest) {
 	}
 
 	// Define which paths are public (don't require auth)
-	const publicPaths = ["/", "/login", "/signup", "/auth"];
+	const publicPaths = ["/", "/login", "/signup", "/auth", "/forgot-password", "/update-password"];
 	const isPublicPath = publicPaths.some(
 		(path) =>
 			request.nextUrl.pathname === path ||
