@@ -3,7 +3,7 @@ import OpenAI from "openai";
 import crypto from "crypto";
 
 const DAILY_LIMIT = 10; // tickets/day
-const DAILY_COST_CENTS_LIMIT = 50; // $0.10/day hard cap
+const DAILY_COST_CENTS_LIMIT = 50; // $0.50/day hard cap
 const MAX_INPUT_CHARS = 800; // keep small to control cost
 const MAX_OUTPUT_TOKENS = 150; // biggest cost lever (lower = cheaper)
 const MIN_SECONDS_BETWEEN_REQUESTS = 2;
@@ -82,6 +82,24 @@ This information is educational, not medical advice.
 `.trim();
 }
 
+function getResponseText(r: any): string {
+  // Preferred field in newer SDK versions
+  if (typeof r?.output_text === "string" && r.output_text.trim()) {
+    return r.output_text.trim();
+  }
+
+  // Fallback for structured output
+  const parts: string[] = [];
+  for (const item of r?.output ?? []) {
+    for (const c of item?.content ?? []) {
+      const text = c?.text ?? c?.value ?? "";
+      if (typeof text === "string" && text.trim()) parts.push(text.trim());
+    }
+  }
+
+  return parts.join("\n").trim();
+}
+
 export async function POST(req: Request) {
   let userMessage = "";
 
@@ -114,20 +132,19 @@ export async function POST(req: Request) {
     const trimmed = message.trim();
     userMessage = trimmed;
 
+    // --- AI connectivity test (TEMP) ---
     if (trimmed === "__ping__") {
       const openai = new OpenAI({ apiKey });
       const r = await openai.responses.create({
         model: "gpt-5-nano",
         input: "Reply with exactly: OK",
-        max_output_tokens: 64, // <-- bump this up
+        max_output_tokens: 64,
       });
-    
-      return Response.json({
-        reply: r.output_text ?? "",
-        fallback: false,
-        source: "ai_ping",
-      });
+
+      const pingReply = getResponseText(r) || "OK";
+      return Response.json({ reply: pingReply, fallback: false, source: "ai_ping" });
     }
+    // --- end test ---
 
     if (!trimmed) {
       return Response.json({ error: "Message is required" }, { status: 400 });
@@ -145,7 +162,7 @@ export async function POST(req: Request) {
 
     // Reserve worst-case BEFORE calling OpenAI
     const estInputTokens = roughTokenEstimate(trimmed) + 200; // system buffer
-    const estOutputTokens = MAX_OUTPUT_TOKENS;
+    const estOutputTokens = Math.max(64, MAX_OUTPUT_TOKENS);
 
     // Cast supabase to any ONLY for rpc typing (until you regen types)
     const rpc = (supabase as any).rpc.bind(supabase as any);
@@ -182,6 +199,7 @@ export async function POST(req: Request) {
       return Response.json({
         reply: freeModeResponse(trimmed),
         fallback: true,
+        source: "gate",
         fallbackMessage,
         reason,
         remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
@@ -203,6 +221,7 @@ export async function POST(req: Request) {
         reply: cached.response_text,
         remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
         fallback: false,
+        source: "cache",
         cached: true,
       });
     }
@@ -213,23 +232,23 @@ export async function POST(req: Request) {
     const safeMaxOut = Math.max(64, MAX_OUTPUT_TOKENS);
 
     const response = await openai.responses.create({
-  model,
-  input: [
-    "SYSTEM: You are a friendly and supportive hyperhidrosis education assistant. ",
-    "Give calm, practical guidance and coping strategies. ",
-    "Do NOT diagnose, and do NOT prescribe medication. ",
-    "If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly. ",
-    "Keep replies concise (under ~8 sentences) unless the user asks for more.\n\n",
-    `USER: ${trimmed}`,
-  ].join(""),
-  max_output_tokens: MAX_OUTPUT_TOKENS,
-});
+      model,
+      input: [
+        "SYSTEM: You are a friendly and supportive hyperhidrosis education assistant. ",
+        "Give calm, practical guidance and coping strategies. ",
+        "Do NOT diagnose, and do NOT prescribe medication. ",
+        "If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly. ",
+        "Keep replies concise (under ~8 sentences) unless the user asks for more.\n\n",
+        `USER: ${trimmed}`,
+      ].join(""),
+      max_output_tokens: safeMaxOut,
+    });
 
-    const reply = response.output_text ?? "";
+    const reply = getResponseText(response);
 
     // Reconcile actual usage if higher than reservation (charge delta only)
     const realIn = response.usage?.input_tokens ?? estInputTokens;
-    const realOut = response.usage?.output_tokens ?? estOutputTokens;
+    const realOut = response.usage?.output_tokens ?? safeMaxOut;
 
     const deltaIn = Math.max(0, realIn - estInputTokens);
     const deltaOut = Math.max(0, realOut - estOutputTokens);
@@ -279,6 +298,8 @@ export async function POST(req: Request) {
       reply: freeModeResponse(userMessage),
       fallback: true,
       source: "catch",
+      cached: false,
+      remainingToday: 0,
       fallbackMessage:
         "⚠ You are currently in Fallback Mode. AI is unavailable or your daily AI tickets have been used.",
       reason: code || "ai_error",
