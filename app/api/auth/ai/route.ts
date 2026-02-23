@@ -113,16 +113,17 @@ export async function POST(req: Request) {
 
     const trimmed = message.trim();
     userMessage = trimmed;
-    if (trimmed === "__ping__") {
-      const openai = new OpenAI({ apiKey });
-      const r = await openai.responses.create({
-        model: "gpt-5-nano",
-        input: "Reply with exactly: OK",
-        max_output_tokens: 10,
-      });
-      return Response.json({ reply: r.output_text ?? "", fallback: false, source: "ai_ping" });
-    }
-    
+
+   if (trimmed === "__ping__") {
+  const openai = new OpenAI({ apiKey });
+  const r = await openai.responses.create({
+    model: "gpt-5-nano",
+    input: "Reply with exactly: OK",
+    max_output_tokens: 10,
+  });
+  return Response.json({ reply: r.output_text ?? "", fallback: false, source: "ai_ping" });
+}
+
     if (!trimmed) {
       return Response.json({ error: "Message is required" }, { status: 400 });
     }
@@ -206,22 +207,17 @@ export async function POST(req: Request) {
     const openai = new OpenAI({ apiKey });
 
     const response = await openai.responses.create({
-      model,
-      input: [
-        {
-          role: "system",
-          content: [
-            "You are a friendly and supportive hyperhidrosis education assistant.",
-            "Give calm, practical guidance and coping strategies.",
-            "Do NOT diagnose, and do NOT prescribe medication.",
-            "If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly.",
-            "Keep replies concise (under ~8 sentences) unless the user asks for more.",
-          ].join(" "),
-        },
-        { role: "user", content: trimmed },
-      ],
-      max_output_tokens: MAX_OUTPUT_TOKENS,
-    });
+  model,
+  input: [
+    "SYSTEM: You are a friendly and supportive hyperhidrosis education assistant. ",
+    "Give calm, practical guidance and coping strategies. ",
+    "Do NOT diagnose, and do NOT prescribe medication. ",
+    "If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly. ",
+    "Keep replies concise (under ~8 sentences) unless the user asks for more.\n\n",
+    `USER: ${trimmed}`,
+  ].join(""),
+  max_output_tokens: MAX_OUTPUT_TOKENS,
+});
 
     const reply = response.output_text ?? "";
 
