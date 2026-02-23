@@ -90,6 +90,8 @@ export function SupportPageContent() {
         ? await res.json()
         : { error: await res.text() };
 
+      console.log("AI Support API response:", data);
+      
       if (res.status === 401) {
         // Replace placeholder
         setMessages((prev) => {
