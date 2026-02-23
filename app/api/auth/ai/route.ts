@@ -287,7 +287,7 @@ export async function POST(req: Request) {
   "System: Answer briefly in plain text.\n\nUser: " + trimmed,
        // input: [
         //  { role: "system", content: "Answer briefly in plain text." },
-          { role: "user", content: trimmed },
+        //  { role: "user", content: trimmed },
        // ],
       });
     }
