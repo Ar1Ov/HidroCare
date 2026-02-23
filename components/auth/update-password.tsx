@@ -27,7 +27,7 @@ export default function UpdatePasswordPage() {
     setDone(true);
     // Optional: force sign-out so they log in fresh with new password
     await supabase.auth.signOut();
-    router.push("/auth/sign-in");
+    router.push("/sign-in");
   }
 
   return (
