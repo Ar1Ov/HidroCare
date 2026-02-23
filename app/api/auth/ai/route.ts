@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
 import crypto from "crypto";
 
-const DAILY_LIMIT = 5; // tickets/day
+const DAILY_LIMIT = 10; // tickets/day
 const DAILY_COST_CENTS_LIMIT = 50; // $0.10/day hard cap
 const MAX_INPUT_CHARS = 800; // keep small to control cost
 const MAX_OUTPUT_TOKENS = 150; // biggest cost lever (lower = cheaper)
