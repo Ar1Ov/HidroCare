@@ -31,11 +31,11 @@ function freeModeResponse(message: string): string {
     return `
 Common triggers for excessive sweating include:
 
-• Stress and anxiety  
-• Heat and humidity  
-• Spicy foods  
-• Caffeine  
-• Tight or synthetic clothing  
+• Stress and anxiety
+• Heat and humidity
+• Spicy foods
+• Caffeine
+• Tight or synthetic clothing
 
 If sweating occurs without clear triggers or starts suddenly, consider speaking with a clinician.
 `.trim();
@@ -45,10 +45,10 @@ If sweating occurs without clear triggers or starts suddenly, consider speaking 
     return `
 You should consider seeing a doctor if:
 
-• Sweating is sudden or worsening  
-• It happens at night with fever or weight loss  
-• You feel chest pain, fainting, or weakness  
-• It significantly affects daily life  
+• Sweating is sudden or worsening
+• It happens at night with fever or weight loss
+• You feel chest pain, fainting, or weakness
+• It significantly affects daily life
 
 A healthcare professional can help rule out underlying causes.
 `.trim();
@@ -58,12 +58,24 @@ A healthcare professional can help rule out underlying causes.
     return `
 Helpful strategies for managing sweat at work:
 
-• Wear breathable fabrics  
-• Use clinical-strength antiperspirant at night  
-• Keep wipes or extra clothing available  
-• Practice calming breathing techniques  
+• Wear breathable fabrics
+• Use clinical-strength antiperspirant at night
+• Keep wipes or extra clothing available
+• Practice calming breathing techniques
 
 Small environmental adjustments can make a big difference.
+`.trim();
+  }
+
+  if (lower.includes("lifestyle")) {
+    return `
+Lifestyle changes that can help reduce sweating:
+
+• Dress for airflow (breathable fabrics, layers): reduces heat buildup that triggers sweat.
+• Limit common food/drink triggers (caffeine, spicy foods): these can stimulate sweat glands.
+• Stress downshift routines (slow breathing, short walks, grounding): lowers “fight-or-flight” signals that worsen sweating.
+
+If symptoms are severe or new/sudden, consider speaking with a clinician.
 `.trim();
   }
 
@@ -71,41 +83,51 @@ Small environmental adjustments can make a big difference.
 Hyperhidrosis is a condition involving excessive sweating beyond normal temperature regulation.
 
 Management options include:
-• Prescription-strength antiperspirants  
-• Iontophoresis  
-• Stress management  
-• Medical consultation if symptoms are severe  
+• Prescription-strength antiperspirants
+• Iontophoresis
+• Stress management
+• Medical consultation if symptoms are severe
 
 This information is educational, not medical advice.
 `.trim();
 }
 
-/**
- * Extract text from OpenAI Responses API result.
- * We intentionally use `any` to avoid TS union issues on `response.output`.
- */
-function getResponseText(resp: any): string {
-  // Many SDK versions provide this convenience:
-  const ot = resp?.output_text;
-  if (typeof ot === "string" && ot.trim()) return ot.trim();
+function isPresetQuestion(message: string): boolean {
+  const lower = (message || "").toLowerCase();
 
+  // Your 4 quick buttons (and close variants)
+  const presetPhrases = [
+    "what triggers excessive sweating",
+    "tips for managing sweat at work",
+    "when should i see a doctor",
+    "lifestyle changes that help",
+  ];
+  if (presetPhrases.some((p) => lower.includes(p))) return true;
+
+  // Also treat these keywords as preset-worthy (so it “works first”)
+  if (lower.includes("trigger") || lower.includes("cause")) return true;
+  if (lower.includes("doctor") || lower.includes("see a doctor")) return true;
+  if (lower.includes("work") || lower.includes("manage")) return true;
+  if (lower.includes("lifestyle")) return true;
+
+  return false;
+}
+
+function getResponseText(r: any): string {
+  // The SDK usually populates this
+  const t = typeof r?.output_text === "string" ? r.output_text.trim() : "";
+  if (t) return t;
+
+  // Extra-safe fallback (works even if typings differ)
   const parts: string[] = [];
-
-  const output = resp?.output;
+  const output = r?.output;
   if (Array.isArray(output)) {
-    for (const item of output) {
-      const content = item?.content;
-      if (!Array.isArray(content)) continue;
-
-      for (const part of content) {
-        // Typical shape: { type: "output_text", text: "..." }
-        if (part?.type === "output_text" && typeof part?.text === "string") {
-          parts.push(part.text);
-        }
-        // Some variants: { type: "text", text: { value: "..." } } etc.
-        const v = part?.text?.value ?? part?.text ?? part?.value;
-        if (typeof v === "string" && v.trim()) {
-          parts.push(v.trim());
+    for (const block of output) {
+      const content = (block as any)?.content;
+      if (Array.isArray(content)) {
+        for (const c of content) {
+          const text = (c as any)?.text ?? (c as any)?.value;
+          if (typeof text === "string" && text.trim()) parts.push(text.trim());
         }
       }
     }
@@ -120,7 +142,6 @@ export async function POST(req: Request) {
   try {
     const supabase = await createClient();
 
-    // Require logged-in user
     const {
       data: { user },
       error: userErr,
@@ -129,13 +150,11 @@ export async function POST(req: Request) {
     if (userErr) return Response.json({ error: userErr.message }, { status: 401 });
     if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
-    // OpenAI key (server-only)
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return Response.json({ error: "Missing OPENAI_API_KEY in env" }, { status: 503 });
+      return Response.json({ error: "Missing OPENAI_API_KEY in environment" }, { status: 503 });
     }
 
-    // Parse input
     const body = await req.json().catch(() => null);
     const message = body?.message;
 
@@ -145,24 +164,6 @@ export async function POST(req: Request) {
 
     const trimmed = message.trim();
     userMessage = trimmed;
-
-    // ---- AI connectivity test (TEMP) ----
-    // Send "__ping__" from the UI to confirm OpenAI works.
-    if (trimmed === "__ping__") {
-      const openai = new OpenAI({ apiKey });
-      const r = await openai.responses.create({
-        model: "gpt-5-nano",
-        input: "Reply with exactly: OK",
-        max_output_tokens: 64,
-      });
-
-      return Response.json({
-        reply: getResponseText(r) || "OK",
-        fallback: false,
-        source: "ai_ping",
-      });
-    }
-    // ---- end test ----
 
     if (!trimmed) {
       return Response.json({ error: "Message is required" }, { status: 400 });
@@ -175,13 +176,33 @@ export async function POST(req: Request) {
       );
     }
 
-    const dayStr = new Date().toISOString().slice(0, 10); // UTC YYYY-MM-DD
+    // ✅ 1) PRESETS FIRST (no limiter, no OpenAI)
+    if (isPresetQuestion(trimmed)) {
+      return Response.json({
+        reply: freeModeResponse(trimmed),
+        fallback: false,
+        source: "preset",
+      });
+    }
 
-    // Reserve worst-case BEFORE calling OpenAI
+    // Optional ping to verify OpenAI key + connectivity
+    if (trimmed === "__ping__") {
+      const openai = new OpenAI({ apiKey });
+      const r: any = await openai.responses.create({
+        model: "gpt-5-nano",
+        input: "Reply with exactly: OK",
+        max_output_tokens: 64,
+      });
+
+      const reply = getResponseText(r) || "OK";
+      return Response.json({ reply, fallback: false, source: "ai_ping" });
+    }
+
+    // ✅ 2) LIMITER ONLY FOR NON-PRESET QUESTIONS
+    const dayStr = new Date().toISOString().slice(0, 10); // UTC YYYY-MM-DD
     const estInputTokens = roughTokenEstimate(trimmed) + 200;
     const estOutputTokens = Math.max(64, MAX_OUTPUT_TOKENS);
 
-    // Supabase RPC typing workaround until you regenerate DB types
     const rpc = (supabase as any).rpc.bind(supabase as any);
 
     const gateResp = await rpc("ai_check_and_increment", {
@@ -205,25 +226,22 @@ export async function POST(req: Request) {
       return Response.json({ error: "Limiter returned no data." }, { status: 500 });
     }
 
-    // If tickets/budget ran out (or rate limited), fall back
     if (!gate.allowed) {
       const reason = gate.reason || "limit";
-      const fallbackMessage =
-        reason === "rate_limited"
-          ? "⚠ You're sending messages too fast. You are currently in Fallback Mode. Please wait a moment and try again."
-          : "⚠ You are currently in Fallback Mode. Your daily AI tickets have been used. Come back tomorrow (or upgrade later) for full AI responses.";
-
       return Response.json({
         reply: freeModeResponse(trimmed),
         fallback: true,
         source: "gate",
-        fallbackMessage,
+        fallbackMessage:
+          reason === "rate_limited"
+            ? "⚠ You're sending messages too fast. Please wait a moment and try again."
+            : "⚠ Daily AI limit reached. Try again tomorrow.",
         reason,
-        remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
+        remainingToday: 0,
       });
     }
 
-    // ---- CACHE CHECK ----
+    // ✅ 3) CACHE (best effort)
     const model = "gpt-5-nano";
     const promptHash = hashPrompt(trimmed, model);
 
@@ -236,36 +254,38 @@ export async function POST(req: Request) {
     if (!cacheErr && cached?.response_text) {
       return Response.json({
         reply: cached.response_text,
-        remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
         fallback: false,
         source: "cache",
         cached: true,
+        remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
       });
     }
-    // ---- END CACHE CHECK ----
 
-    // Call OpenAI
+    // ✅ 4) OPENAI CALL (string input is the most reliable with your current setup)
     const openai = new OpenAI({ apiKey });
 
-    const response = await openai.responses.create({
+    const prompt = [
+      "You are a friendly and supportive hyperhidrosis education assistant.",
+      "Give calm, practical guidance and coping strategies.",
+      "Do NOT diagnose, and do NOT prescribe medication.",
+      "If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly.",
+      "Keep replies concise (under ~8 sentences) unless the user asks for more.",
+      "",
+      `User: ${trimmed}`,
+    ].join("\n");
+
+    const response: any = await openai.responses.create({
       model,
-      input: [
-        {
-          role: "system",
-          content:
-            "You are a friendly and supportive hyperhidrosis education assistant. Give calm, practical guidance and coping strategies. Do NOT diagnose or prescribe medication. If symptoms are sudden, severe, include chest pain, fainting, fever, weight loss, or occur at night, advise seeing a clinician promptly. Keep replies concise (under ~8 sentences).",
-        },
-        { role: "user", content: trimmed },
-      ],
+      input: prompt,
       max_output_tokens: estOutputTokens,
     });
 
     let reply = getResponseText(response);
     if (!reply) reply = "⚠ AI returned empty content.";
 
-    // Reconcile actual usage (charge delta only)
-    const realIn = response.usage?.input_tokens ?? estInputTokens;
-    const realOut = response.usage?.output_tokens ?? estOutputTokens;
+    // ✅ 5) Reconcile usage (best effort)
+    const realIn = response?.usage?.input_tokens ?? estInputTokens;
+    const realOut = response?.usage?.output_tokens ?? estOutputTokens;
 
     const deltaIn = Math.max(0, realIn - estInputTokens);
     const deltaOut = Math.max(0, realOut - estOutputTokens);
@@ -283,7 +303,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // ---- CACHE WRITE (best effort) ----
+    // ✅ 6) Cache write (best effort)
     try {
       await (supabase as any).from("ai_response_cache").insert({
         prompt_hash: promptHash,
@@ -293,16 +313,15 @@ export async function POST(req: Request) {
         output_tokens: realOut,
       });
     } catch {
-      // ignore cache write failures
+      // ignore
     }
-    // ---- END CACHE WRITE ----
 
     return Response.json({
       reply,
-      remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
-      source: "ai",
       fallback: false,
+      source: "ai",
       cached: false,
+      remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
     });
   } catch (err: any) {
     const msg = err?.error?.message || err?.message || "AI unavailable";
@@ -314,10 +333,7 @@ export async function POST(req: Request) {
       reply: freeModeResponse(userMessage),
       fallback: true,
       source: "catch",
-      cached: false,
-      remainingToday: 0,
-      fallbackMessage:
-        "⚠ You are currently in Fallback Mode. AI is unavailable or your daily AI tickets have been used.",
+      fallbackMessage: "⚠ AI is unavailable right now.",
       reason: code || "ai_error",
     });
   }
