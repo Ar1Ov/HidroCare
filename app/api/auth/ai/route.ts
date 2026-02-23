@@ -264,7 +264,7 @@ export async function POST(req: Request) {
       model: "gpt-5-nano",
       input:
         "System: You are a friendly and supportive hyperhidrosis education assistant. Answer DIRECTLY, but also conversationally" +
-        "Give calm, practical guidance. Do NOT diagnose. Keep replies under 6 sentences (make sure they are FULL sentences).\n\n" +
+        "Give calm, practical guidance. Do NOT diagnose. Keep replies between 3-5 sentences. End with a complete sentence. \n\n" +
         "User: " +
         trimmed,
       reasoning: { effort: "low" as const },
@@ -293,6 +293,24 @@ export async function POST(req: Request) {
     }
 
     const reply = (getResponseText(response) || "").trim();
+
+const seemsCutOff =
+  response?.status === "incomplete" ||
+  /[,:;(\-]$/.test(reply) ||                 // ends with hanging punctuation
+  (reply && !/[.!?]$/.test(reply));          // doesn't end with sentence punctuation
+
+if (seemsCutOff) {
+  const r2: any = await openai.responses.create({
+    model: "gpt-5-nano",
+    input: "Finish the last sentence cleanly in 1 sentence:\n\n" + reply,
+    reasoning: { effort: "low" as const },
+    text: { verbosity: "low" as const },
+    max_output_tokens: 80,
+  });
+
+  const add = (getResponseText(r2) || "").trim();
+  if (add) return Response.json({ reply: (reply + " " + add).trim(), fallback: false, source: "ai" });
+}
 
     if (!reply) {
       return Response.json({
