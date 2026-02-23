@@ -263,7 +263,7 @@ export async function POST(req: Request) {
     const baseParams = {
       model: "gpt-5-nano",
       input:
-        "System: You are a friendly and supportive hyperhidrosis education assistant. " +
+        "System: You are a friendly and supportive hyperhidrosis education assistant. Answer DIRECTLY, but also conversationally" +
         "Give calm, practical guidance. Do NOT diagnose. Keep replies under 6 sentences (make sure they are FULL sentences).\n\n" +
         "User: " +
         trimmed,
