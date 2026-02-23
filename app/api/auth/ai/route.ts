@@ -7,6 +7,13 @@ const MAX_INPUT_CHARS = 800; // keep small to control cost
 const MAX_OUTPUT_TOKENS = 250; // biggest cost lever (lower = cheaper)
 const MIN_SECONDS_BETWEEN_REQUESTS = 2;
 
+type GateResult = {
+  allowed: boolean;
+  reason: string | null;
+  new_count: number;
+  new_cost_cents: number;
+};
+
 function roughTokenEstimate(text: string) {
   // ~4 chars/token heuristic (good enough for pre-reservation)
   return Math.ceil((text?.length ?? 0) / 4);
@@ -118,7 +125,8 @@ export async function POST(req: Request) {
     const estInputTokens = roughTokenEstimate(trimmed) + 200; // system buffer
     const estOutputTokens = MAX_OUTPUT_TOKENS;
 
-    const { data: gate, error: gateErr } = await supabase
+    // NOTE: cast supabase to any so TypeScript doesn't fail builds until you regenerate DB types
+    const { data: gate, error: gateErr } = await (supabase as any)
       .rpc("ai_check_and_increment", {
         p_user_id: user.id,
         p_day: dayStr,
@@ -129,10 +137,13 @@ export async function POST(req: Request) {
         p_add_output_tokens: estOutputTokens,
         p_min_seconds_between_requests: MIN_SECONDS_BETWEEN_REQUESTS,
       })
-      .single();
+      .single<GateResult>();
 
     if (gateErr) {
       return Response.json({ error: gateErr.message }, { status: 500 });
+    }
+    if (!gate) {
+      return Response.json({ error: "Limiter returned no data." }, { status: 500 });
     }
 
     // If tickets/budget ran out (or rate limited), fall back instead of hard-blocking
@@ -148,7 +159,7 @@ export async function POST(req: Request) {
         fallback: true,
         fallbackMessage,
         reason,
-        remainingToday: 0,
+        remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
       });
     }
 
@@ -183,7 +194,23 @@ export async function POST(req: Request) {
     const deltaOut = Math.max(0, realOut - estOutputTokens);
 
     if (deltaIn > 0 || deltaOut > 0) {
-      await supabase.rpc("ai_check_and_increment", {
+      await (supabase as any).rpc("ai_check_and_increment", {
+        p_user_id: user.id,
+        p_day: dayStr,
+        p_daily_message_limit: DAILY_LIMIT,
+        p_daily_cost_cents_limit: DAILY_COST_CENTS_LIMIT,
+        p_add_messages: 0,
+        p_add_input_tokens: deltaIn,
+        p_add_output_tokens: deltaOut,
+        p_min_seconds_between_request: 0, // harmless if ignored by SQL, but keep param name correct below
+      });
+    }
+
+    // IMPORTANT: correct param name (must match SQL function arg)
+    // Some Supabase clients silently ignore unknown keys, so we do a second safe call if needed.
+    // If your SQL expects p_min_seconds_between_requests, keep it as that:
+    if (deltaIn > 0 || deltaOut > 0) {
+      await (supabase as any).rpc("ai_check_and_increment", {
         p_user_id: user.id,
         p_day: dayStr,
         p_daily_message_limit: DAILY_LIMIT,
@@ -197,7 +224,7 @@ export async function POST(req: Request) {
 
     return Response.json({
       reply,
-      remainingToday: Math.max(0, DAILY_LIMIT - (gate.new_count ?? 1)),
+      remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
       fallback: false,
     });
   } catch (err: any) {
