@@ -177,7 +177,7 @@ export async function POST(req: Request) {
     const model = "gpt-5-nano";
     const promptHash = hashPrompt(trimmed, model);
 
-    const { data: cached, error: cacheErr } = await supabase
+    const { data: cached, error: cacheErr } = await (supabase as any)
       .from("ai_response_cache")
       .select("response_text")
       .eq("prompt_hash", promptHash)
@@ -239,7 +239,7 @@ export async function POST(req: Request) {
 
     // ---- CACHE WRITE (best-effort; never block user) ----
     try {
-      await supabase.from("ai_response_cache").insert({
+      await (supabase as any).from("ai_response_cache").insert({
         prompt_hash: promptHash,
         model,
         response_text: reply,
