@@ -262,15 +262,11 @@ export async function POST(req: Request) {
 
     const baseParams = {
       model: "gpt-5-nano",
-      input: [
-        {
-          role: "system",
-          content:
-            "You are a friendly and supportive hyperhidrosis education assistant. " +
-            "Give calm, practical guidance. Do NOT diagnose. Keep replies under 6 sentences.",
-        },
-        { role: "user" as const, content: trimmed },
-      ],
+      input:
+        "System: You are a friendly and supportive hyperhidrosis education assistant. " +
+        "Give calm, practical guidance. Do NOT diagnose. Keep replies under 6 sentences.\n\n" +
+        "User: " +
+        trimmed,
       reasoning: { effort: "low" as const },
       text: { verbosity: "low" as const },
       max_output_tokens: MAX_OUTPUT_TOKENS,
@@ -287,10 +283,12 @@ export async function POST(req: Request) {
       response = await openai.responses.create({
         ...baseParams,
         max_output_tokens: 400,
-        input: [
-          { role: "system", content: "Answer briefly in plain text." },
+        input:
+  "System: Answer briefly in plain text.\n\nUser: " + trimmed,
+       // input: [
+        //  { role: "system", content: "Answer briefly in plain text." },
           { role: "user", content: trimmed },
-        ],
+       // ],
       });
     }
 
