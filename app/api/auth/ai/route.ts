@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
+import crypto from "crypto";
 
 const DAILY_LIMIT = 5; // tickets/day
 const DAILY_COST_CENTS_LIMIT = 10; // $0.10/day hard cap
@@ -17,6 +18,12 @@ type GateResult = {
 function roughTokenEstimate(text: string) {
   // ~4 chars/token heuristic (good enough for pre-reservation)
   return Math.ceil((text?.length ?? 0) / 4);
+}
+
+function hashPrompt(message: string, model: string) {
+  // Normalize to increase cache hit rate
+  const normalized = message.trim().toLowerCase().replace(/[^\w\s]/g, "");
+  return crypto.createHash("sha256").update(`${model}|${normalized}`).digest("hex");
 }
 
 function freeModeResponse(message: string): string {
@@ -166,11 +173,31 @@ export async function POST(req: Request) {
       });
     }
 
+    // ---- CACHE CHECK (after limiter, before OpenAI) ----
+    const model = "gpt-5-nano";
+    const promptHash = hashPrompt(trimmed, model);
+
+    const { data: cached, error: cacheErr } = await supabase
+      .from("ai_response_cache")
+      .select("response_text")
+      .eq("prompt_hash", promptHash)
+      .maybeSingle();
+
+    if (!cacheErr && cached?.response_text) {
+      return Response.json({
+        reply: cached.response_text,
+        remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
+        fallback: false,
+        cached: true,
+      });
+    }
+    // ---- END CACHE CHECK ----
+
     // Call OpenAI (GPT-5 nano via Responses API)
     const openai = new OpenAI({ apiKey });
 
     const response = await openai.responses.create({
-      model: "gpt-5-nano",
+      model,
       input: [
         {
           role: "system",
@@ -210,10 +237,25 @@ export async function POST(req: Request) {
       });
     }
 
+    // ---- CACHE WRITE (best-effort; never block user) ----
+    try {
+      await supabase.from("ai_response_cache").insert({
+        prompt_hash: promptHash,
+        model,
+        response_text: reply,
+        input_tokens: realIn,
+        output_tokens: realOut,
+      });
+    } catch {
+      // ignore cache write failures
+    }
+    // ---- END CACHE WRITE ----
+
     return Response.json({
       reply,
       remainingToday: Math.max(0, DAILY_LIMIT - gate.new_count),
       fallback: false,
+      cached: false,
     });
   } catch (err: any) {
     const msg = err?.error?.message || err?.message || "AI unavailable";
