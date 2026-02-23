@@ -1,9 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
 
-const DAILY_LIMIT = 10; // change if you want
+const DAILY_LIMIT = 5; // tickets/day
+const DAILY_COST_CENTS_LIMIT = 10; // $0.10/day hard cap
 const MAX_INPUT_CHARS = 800; // keep small to control cost
-const MAX_OUTPUT_TOKENS = 300; // biggest cost lever
+const MAX_OUTPUT_TOKENS = 250; // biggest cost lever (lower = cheaper)
+const MIN_SECONDS_BETWEEN_REQUESTS = 2;
+
+function roughTokenEstimate(text: string) {
+  // ~4 chars/token heuristic (good enough for pre-reservation)
+  return Math.ceil((text?.length ?? 0) / 4);
+}
 
 function freeModeResponse(message: string): string {
   const lower = (message || "").toLowerCase();
@@ -74,20 +81,13 @@ export async function POST(req: Request) {
       error: userErr,
     } = await supabase.auth.getUser();
 
-    if (userErr) {
-      return Response.json({ error: userErr.message }, { status: 401 });
-    }
-    if (!user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (userErr) return Response.json({ error: userErr.message }, { status: 401 });
+    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     // OpenAI key must exist (server-side only)
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
-      return Response.json(
-        { error: "Missing OPENAI_API_KEY in .env.local" },
-        { status: 503 },
-      );
+      return Response.json({ error: "Missing OPENAI_API_KEY in .env.local" }, { status: 503 });
     }
 
     // Parse input
@@ -107,52 +107,57 @@ export async function POST(req: Request) {
     if (trimmed.length > MAX_INPUT_CHARS) {
       return Response.json(
         { error: `Message too long. Max ${MAX_INPUT_CHARS} characters.` },
-        { status: 413 },
+        { status: 413 }
       );
     }
 
-    // Daily limit
-    const day = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    // Daily bucketing (UTC) for consistent limits
+    const dayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
-    const { data: usageRow, error: usageReadErr } = await supabase
-      .from("ai_usage_daily")
-      .select("count")
-      .eq("user_id", user.id)
-      .eq("day", day)
-      .maybeSingle();
+    // Reserve worst-case BEFORE calling OpenAI (prevents budget spikes)
+    const estInputTokens = roughTokenEstimate(trimmed) + 200; // system buffer
+    const estOutputTokens = MAX_OUTPUT_TOKENS;
 
-    if (usageReadErr) {
-      return Response.json({ error: usageReadErr.message }, { status: 500 });
+    const { data: gate, error: gateErr } = await supabase
+      .rpc("ai_check_and_increment", {
+        p_user_id: user.id,
+        p_day: dayStr,
+        p_daily_message_limit: DAILY_LIMIT,
+        p_daily_cost_cents_limit: DAILY_COST_CENTS_LIMIT,
+        p_add_messages: 1,
+        p_add_input_tokens: estInputTokens,
+        p_add_output_tokens: estOutputTokens,
+        p_min_seconds_between_requests: MIN_SECONDS_BETWEEN_REQUESTS,
+      })
+      .single();
+
+    if (gateErr) {
+      return Response.json({ error: gateErr.message }, { status: 500 });
     }
 
-    const currentCount = usageRow?.count ?? 0;
-    if (currentCount >= DAILY_LIMIT) {
-      return Response.json(
-        { error: `Daily limit reached (${DAILY_LIMIT}/day). Try again tomorrow.` },
-        { status: 429 },
-      );
+    // If tickets/budget ran out (or rate limited), fall back instead of hard-blocking
+    if (!gate.allowed) {
+      const reason = gate.reason || "limit";
+      const fallbackMessage =
+        reason === "rate_limited"
+          ? "⚠ You're sending messages too fast. You are currently in Fallback Mode. Please wait a moment and try again."
+          : "⚠ You are currently in Fallback Mode. Your daily AI tickets have been used. Come back tomorrow (or upgrade later) for full AI responses.";
+
+      return Response.json({
+        reply: freeModeResponse(trimmed),
+        fallback: true,
+        fallbackMessage,
+        reason,
+        remainingToday: 0,
+      });
     }
 
-    // Increment usage BEFORE calling OpenAI (prevents spamming)
-    const { error: upsertErr } = await supabase
-      .from("ai_usage_daily")
-      .upsert(
-        { user_id: user.id, day, count: currentCount + 1 },
-        { onConflict: "user_id,day" },
-      );
-
-    if (upsertErr) {
-      return Response.json({ error: upsertErr.message }, { status: 500 });
-    }
-
-    // Call OpenAI (GPT-5 nano)
+    // Call OpenAI (GPT-5 nano via Responses API)
     const openai = new OpenAI({ apiKey });
 
-    const response = await openai.chat.completions.create({
+    const response = await openai.responses.create({
       model: "gpt-5-nano",
-      temperature: 0.4,
-      max_tokens: MAX_OUTPUT_TOKENS,
-      messages: [
+      input: [
         {
           role: "system",
           content: [
@@ -165,11 +170,34 @@ export async function POST(req: Request) {
         },
         { role: "user", content: trimmed },
       ],
+      max_output_tokens: MAX_OUTPUT_TOKENS,
     });
 
+    const reply = response.output_text ?? "";
+
+    // Reconcile actual usage if higher than reservation
+    const realIn = response.usage?.input_tokens ?? estInputTokens;
+    const realOut = response.usage?.output_tokens ?? estOutputTokens;
+
+    const deltaIn = Math.max(0, realIn - estInputTokens);
+    const deltaOut = Math.max(0, realOut - estOutputTokens);
+
+    if (deltaIn > 0 || deltaOut > 0) {
+      await supabase.rpc("ai_check_and_increment", {
+        p_user_id: user.id,
+        p_day: dayStr,
+        p_daily_message_limit: DAILY_LIMIT,
+        p_daily_cost_cents_limit: DAILY_COST_CENTS_LIMIT,
+        p_add_messages: 0,
+        p_add_input_tokens: deltaIn,
+        p_add_output_tokens: deltaOut,
+        p_min_seconds_between_requests: 0,
+      });
+    }
+
     return Response.json({
-      reply: response.choices[0]?.message?.content ?? "",
-      remainingToday: Math.max(0, DAILY_LIMIT - (currentCount + 1)),
+      reply,
+      remainingToday: Math.max(0, DAILY_LIMIT - (gate.new_count ?? 1)),
       fallback: false,
     });
   } catch (err: any) {
@@ -178,23 +206,11 @@ export async function POST(req: Request) {
 
     console.error("AI error:", code, msg);
 
-    // For quota/missing credentials/etc → fallback using the user's real message
-    if (
-      code === "insufficient_quota" ||
-      String(msg).toLowerCase().includes("quota") ||
-      String(msg).toLowerCase().includes("missing credentials")
-    ) {
-      return Response.json({
-        reply: freeModeResponse(userMessage),
-        fallback: true,
-        reason: code || "ai_unavailable",
-      });
-    }
-
-    // Any other failure → still fallback, but use user message to pick best response
     return Response.json({
       reply: freeModeResponse(userMessage),
       fallback: true,
+      fallbackMessage:
+        "⚠ You are currently in Fallback Mode. AI is unavailable or your daily AI tickets have been used.",
       reason: code || "ai_error",
     });
   }
