@@ -22,38 +22,57 @@ export default function HomePage() {
 				</div>
 			</header>
 
-			<main className="flex-1 flex items-center justify-center">
-				<div className="container flex flex-col items-center text-center gap-8">
-					<div className="space-y-4 max-w-2xl">
-						<h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-							<em>Your Log,</em>
-							<br />
-							<span className="text-primary">
-  Take control of your <strong>Hyperhidrosis</strong>
-</span>
-						</h1>
-						<p className="text-lg text-muted-foreground max-w-lg mx-auto">
-						A personalized hyperhidrosis support platform. Track symptoms,
-  assess severity, and receive intelligent recommendations
-  to manage excessive sweating with confidence.
-						</p>
-					</div>
+			<main className="relative flex-1 flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 text-white">
 
-					<div className="flex flex-col sm:flex-row gap-4">
-						<Link href="/signup">
-							<Button size="lg" className="gap-2">
-								Get started
-								<ArrowRight className="h-4 w-4" />
-							</Button>
-						</Link>
-						<Link href="/login">
-							<Button size="lg" variant="outline">
-								I have an account
-							</Button>
-						</Link>
-					</div>
-				</div>
-			</main>
+  {/* Background Glow */}
+  <div className="absolute inset-0 -z-10">
+    <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-[500px] w-[500px] rounded-full bg-blue-600/20 blur-3xl" />
+  </div>
+
+  <div className="container flex flex-col items-center text-center gap-10 py-24">
+
+    {/* Optional Badge */}
+    <div className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur text-sm text-blue-200 border border-white/10">
+      Trusted by people managing hyperhidrosis daily
+    </div>
+
+    <div className="space-y-6 max-w-3xl">
+      <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl leading-tight">
+        <span className="italic text-slate-300">Your Log.</span>
+        <br />
+        Take control of your{" "}
+        <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
+          Hyperhidrosis
+        </span>
+      </h1>
+
+      <p className="text-xl text-slate-300 max-w-xl mx-auto">
+        Track symptoms, assess severity, and receive intelligent insights —
+        all in one personalized support platform.
+      </p>
+    </div>
+
+    <div className="flex flex-col sm:flex-row gap-4 pt-4">
+      <Link href="/signup">
+        <Button size="lg" className="gap-2 px-8 py-6 text-base shadow-lg shadow-blue-900/30">
+          Get started
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      </Link>
+
+      <Link href="/login">
+        <Button
+          size="lg"
+          variant="outline"
+          className="px-8 py-6 text-base border-white/20 text-white hover:bg-white/10"
+        >
+          I have an account
+        </Button>
+      </Link>
+    </div>
+
+  </div>
+</main>
 		</div>
 	);
 }
