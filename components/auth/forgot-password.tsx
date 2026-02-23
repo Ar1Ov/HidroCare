@@ -15,7 +15,7 @@ export default function ForgotPasswordPage() {
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       // IMPORTANT: must match your deployed domain + route below
-      redirectTo: `${location.origin}/auth/update-password`,
+      redirectTo: `${location.origin}/update-password`,
     });
 
     if (error) return setError(error.message);
