@@ -18,7 +18,7 @@ export default async function DashboardPage() {
   return (
     <div className="container mx-auto space-y-8 py-8">
       {/* Welcome Message */}
-      <div className="rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 p-6 text-white">
+      <div className="rounded-xl bg-blue-900 p-6 text-white">
         <h1 className="text-2xl font-bold">Welcome back, {userName}! 👋</h1>
         <p className="mt-2 opacity-90">
           Track your hyperhidrosis symptoms and monitor your progress over time.
