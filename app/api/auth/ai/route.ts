@@ -114,15 +114,20 @@ export async function POST(req: Request) {
     const trimmed = message.trim();
     userMessage = trimmed;
 
-   if (trimmed === "__ping__") {
-  const openai = new OpenAI({ apiKey });
-  const r = await openai.responses.create({
-    model: "gpt-5-nano",
-    input: "Reply with exactly: OK",
-    max_output_tokens: 10,
-  });
-  return Response.json({ reply: r.output_text ?? "", fallback: false, source: "ai_ping" });
-}
+    if (trimmed === "__ping__") {
+      const openai = new OpenAI({ apiKey });
+      const r = await openai.responses.create({
+        model: "gpt-5-nano",
+        input: "Reply with exactly: OK",
+        max_output_tokens: 64, // <-- bump this up
+      });
+    
+      return Response.json({
+        reply: r.output_text ?? "",
+        fallback: false,
+        source: "ai_ping",
+      });
+    }
 
     if (!trimmed) {
       return Response.json({ error: "Message is required" }, { status: 400 });
@@ -205,6 +210,7 @@ export async function POST(req: Request) {
 
     // Call OpenAI (GPT-5 nano via Responses API)
     const openai = new OpenAI({ apiKey });
+    const safeMaxOut = Math.max(64, MAX_OUTPUT_TOKENS);
 
     const response = await openai.responses.create({
   model,
