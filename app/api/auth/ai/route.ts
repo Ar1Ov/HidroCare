@@ -82,16 +82,6 @@ This information is educational, not medical advice.
 `.trim();
 }
 
-if (trimmed === "__ping__") {
-  const openai = new OpenAI({ apiKey });
-  const r = await openai.responses.create({
-    model: "gpt-5-nano",
-    input: "Reply with exactly: OK",
-    max_output_tokens: 10,
-  });
-  return Response.json({ reply: r.output_text ?? "", fallback: false, source: "ai_ping" });
-}
-
 export async function POST(req: Request) {
   let userMessage = "";
 
@@ -123,7 +113,16 @@ export async function POST(req: Request) {
 
     const trimmed = message.trim();
     userMessage = trimmed;
-
+    if (trimmed === "__ping__") {
+      const openai = new OpenAI({ apiKey });
+      const r = await openai.responses.create({
+        model: "gpt-5-nano",
+        input: "Reply with exactly: OK",
+        max_output_tokens: 10,
+      });
+      return Response.json({ reply: r.output_text ?? "", fallback: false, source: "ai_ping" });
+    }
+    
     if (!trimmed) {
       return Response.json({ error: "Message is required" }, { status: 400 });
     }
