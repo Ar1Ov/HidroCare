@@ -47,7 +47,7 @@ export default function HomePage() {
       </h1>
 
       <p className="text-xl text-slate-300 max-w-xl mx-auto">
-      1/20 People suffer with hyperhidrosis... Are you one of them? <br /> Track symptoms, assess severity, and receive intelligent insights... <br /> all in one personalized support platform.
+      1/20 people suffer with hyperhidrosis... Are you one of them? <br /> Track symptoms, assess severity, and receive intelligent insights... all in one personalized support platform.
       </p>
     </div>
 
@@ -63,7 +63,7 @@ export default function HomePage() {
         <Button
           size="lg"
           variant="outline"
-          className="px-8 py-6 text-base border-white/20 text-white hover:bg-white/10"
+          className="px-8 py-6 text-base border-white/20 text-white hover:bg-gray/10"
         >
           I have an account
         </Button>
