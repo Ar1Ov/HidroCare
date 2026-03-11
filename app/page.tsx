@@ -44,7 +44,6 @@ export default function HomePage() {
         <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
           Hyperhidrosis
         </span>
-        here
       </h1>
 
       <p className="text-xl text-slate-300 max-w-xl mx-auto">
