@@ -38,17 +38,17 @@ export default function HomePage() {
 
     <div className="space-y-6 max-w-3xl">
       <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl leading-tight">
-        <span className="italic text-slate-300">Your Log.</span>
+        <span className="italic text-slate-300">Your Log</span>
         <br />
-        Take control of your{" "}
+        1/20 People suffer with hyperhidrosis... Are you one of them? Take control of your{" "}
         <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
           Hyperhidrosis
         </span>
+        here
       </h1>
 
       <p className="text-xl text-slate-300 max-w-xl mx-auto">
-        Track symptoms, assess severity, and receive intelligent insights —
-        all in one personalized support platform.
+        Track symptoms, assess severity, and receive intelligent insights... <br /> all in one personalized support platform.
       </p>
     </div>
 
