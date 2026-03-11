@@ -63,7 +63,7 @@ export default function HomePage() {
         <Button
           size="lg"
           variant="outline"
-          className="px-8 py-6 text-base border-white/20 text-white hover:bg-gray/10"
+          className="px-8 py-6 text-base border-white/20 text-gray-300 hover:bg-white/10"
         >
           I have an account
         </Button>
