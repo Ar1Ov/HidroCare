@@ -40,7 +40,7 @@ export default function HomePage() {
       <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl leading-tight">
         <span className="italic text-slate-300">Your Log</span>
         <br />
-        1/20 People suffer with hyperhidrosis... Are you one of them? Take control of your{" "}
+        Take control of your{" "}
         <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
           Hyperhidrosis
         </span>
@@ -48,7 +48,7 @@ export default function HomePage() {
       </h1>
 
       <p className="text-xl text-slate-300 max-w-xl mx-auto">
-        Track symptoms, assess severity, and receive intelligent insights... <br /> all in one personalized support platform.
+      1/20 People suffer with hyperhidrosis... Are you one of them? <br /> Track symptoms, assess severity, and receive intelligent insights... <br /> all in one personalized support platform.
       </p>
     </div>
 
