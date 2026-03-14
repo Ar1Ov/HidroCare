@@ -23,11 +23,11 @@ export function Header({ userEmail }: HeaderProps) {
 	const avatarLetter = userEmail?.charAt(0).toUpperCase() || "U";
 
 	return (
-		<header className="sticky top-0 z-50 w-full border-b border-sky-200/50 bg-white/60 backdrop-blur-md dark:border-sky-800/30 dark:bg-slate-900/60 supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60">
+		<header className="sticky top-0 z-50 w-full border-b border-teal-200/50 bg-white/60 backdrop-blur-md dark:border-teal-800/30 dark:bg-slate-900/60 supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60">
 			<div className="container flex h-14 items-center">
 				<Link
 					href="/dashboard"
-					className="flex items-center gap-2 font-bold text-sky-800 dark:text-sky-200"
+					className="flex items-center gap-2 font-bold text-teal-800 dark:text-teal-200"
 				>
 					<FileText className="h-5 w-5" />
 					<span>HidroCare</span>
@@ -37,7 +37,7 @@ export function Header({ userEmail }: HeaderProps) {
 						<Button
 						variant={pathname === "/about" ? "secondary" : "ghost"}
 						size="sm"
-						className="gap-2 text-sky-700 dark:text-sky-300"
+						className="gap-2 text-teal-700 dark:text-teal-300"
 					>
 						<BookOpen className="h-4 w-4" />
 						<span className="hidden sm:inline">Understanding HyperHidrosis</span>
@@ -47,7 +47,7 @@ export function Header({ userEmail }: HeaderProps) {
 						<Button
 							variant={pathname === "/latest-news" ? "secondary" : "ghost"}
 							size="sm"
-							className="gap-2 text-sky-700 dark:text-sky-300"
+							className="gap-2 text-teal-700 dark:text-teal-300"
 						>
 							<Newspaper className="h-4 w-4" />
 							<span className="hidden sm:inline">Latest News</span>
@@ -57,7 +57,7 @@ export function Header({ userEmail }: HeaderProps) {
 						<Button
 							variant={pathname === "/ai-support" ? "secondary" : "ghost"}
 							size="sm"
-							className="gap-2 text-sky-700 dark:text-sky-300"
+							className="gap-2 text-teal-700 dark:text-teal-300"
 						>
 							<MessageCircle className="h-4 w-4" />
 							<span className="hidden sm:inline">AI Support</span>

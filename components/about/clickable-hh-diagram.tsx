@@ -129,14 +129,14 @@ export function ClickableHHDiagram() {
 
   return (
     <div className="mt-4">
-      <div className="rounded-xl border border-sky-200/60 bg-white/60 p-3 dark:border-sky-800/40 dark:bg-slate-900/40">
+      <div className="rounded-xl border border-teal-200/60 bg-white/60 p-3 dark:border-teal-800/40 dark:bg-slate-900/40">
         <p className="mb-3 text-xs text-muted-foreground">
           Click below to see quick info and common options.
         </p>
 
         {/* Diagram wrapper */}
         <div className="flex justify-center">
-          <div className="relative mx-auto w-auto max-w-2xl overflow-hidden rounded-xl border border-sky-200/60 bg-sky-50/30 dark:border-sky-800/40 dark:bg-slate-800/30">
+          <div className="relative mx-auto w-auto max-w-2xl overflow-hidden rounded-xl border border-teal-200/60 bg-teal-50/30 dark:border-teal-800/40 dark:bg-slate-800/30">
             <Image
               src="/images/hyperhidrosis-diagram.png"
               alt="Hyperhidrosis diagram"

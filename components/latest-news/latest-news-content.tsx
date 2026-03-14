@@ -84,7 +84,7 @@ export function LatestNewsContent() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 md:py-12">
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-sky-900 dark:text-sky-100 sm:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-teal-900 dark:text-teal-100 sm:text-4xl">
             Latest News & Science
           </h1>
           <p className="max-w-2xl text-base text-muted-foreground">
@@ -121,9 +121,9 @@ export function LatestNewsContent() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
           {/* NEWS */}
-          <Card className="border-sky-200/60 bg-white/80 shadow-lg shadow-sky-100/40 backdrop-blur-sm dark:border-sky-800/40 dark:bg-slate-900/80 dark:shadow-sky-950/30">
+          <Card className="border-teal-200/60 bg-white/80 shadow-lg shadow-teal-100/40 backdrop-blur-sm dark:border-teal-800/40 dark:bg-slate-900/80 dark:shadow-teal-950/30">
             <CardHeader>
-              <CardTitle className="text-sky-900 dark:text-sky-100">In the News</CardTitle>
+              <CardTitle className="text-teal-900 dark:text-teal-100">In the News</CardTitle>
               <CardDescription>Headlines pulled from Google News search (RSS).</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -132,12 +132,12 @@ export function LatestNewsContent() {
               ) : (
                 <ul className="space-y-3">
                   {news.map((it) => (
-                    <li key={it.link} className="rounded-xl border border-sky-200/60 p-4 dark:border-sky-800/40">
+                    <li key={it.link} className="rounded-xl border border-teal-200/60 p-4 dark:border-teal-800/40">
                       <a
                         href={it.link}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-start justify-between gap-3 font-medium text-sky-900 hover:underline dark:text-sky-100"
+                        className="flex items-start justify-between gap-3 font-medium text-teal-900 hover:underline dark:text-teal-100"
                       >
                         <span>{it.title}</span>
                         <ExternalLink className="mt-1 h-4 w-4 shrink-0 opacity-70" />
@@ -157,9 +157,9 @@ export function LatestNewsContent() {
           </Card>
 
           {/* RESEARCH */}
-          <Card className="border-sky-200/60 bg-white/80 shadow-lg shadow-sky-100/40 backdrop-blur-sm dark:border-sky-800/40 dark:bg-slate-900/80 dark:shadow-sky-950/30">
+          <Card className="border-teal-200/60 bg-white/80 shadow-lg shadow-teal-100/40 backdrop-blur-sm dark:border-teal-800/40 dark:bg-slate-900/80 dark:shadow-teal-950/30">
             <CardHeader>
-              <CardTitle className="text-sky-900 dark:text-sky-100">Latest Research</CardTitle>
+              <CardTitle className="text-teal-900 dark:text-teal-100">Latest Research</CardTitle>
               <CardDescription>New publication metadata from Crossref.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -170,13 +170,13 @@ export function LatestNewsContent() {
                   {research.map((it) => (
                     <li
                       key={it.doi ?? it.url ?? it.title}
-                      className="rounded-xl border border-sky-200/60 p-4 dark:border-sky-800/40"
+                      className="rounded-xl border border-teal-200/60 p-4 dark:border-teal-800/40"
                     >
                       <a
                         href={it.url ?? "#"}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-start justify-between gap-3 font-medium text-sky-900 hover:underline dark:text-sky-100"
+                        className="flex items-start justify-between gap-3 font-medium text-teal-900 hover:underline dark:text-teal-100"
                       >
                         <span>{it.title}</span>
                         <ExternalLink className="mt-1 h-4 w-4 shrink-0 opacity-70" />

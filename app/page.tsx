@@ -39,7 +39,7 @@ export default function HomePage() {
 
 					<div className="container flex flex-col items-center text-center gap-8 sm:gap-10">
 						<div className="rounded-full border border-teal-200/60 bg-white/60 px-4 py-2 text-sm text-teal-700 dark:border-teal-700/40 dark:bg-teal-950/40 dark:text-teal-300">
-							Trusted by people who sweat heavily—you’re not alone
+							Trusted by people who sweat heavily — you’re not alone
 						</div>
 
 						<div className="space-y-6 max-w-2xl">
@@ -90,10 +90,10 @@ export default function HomePage() {
 								<span className="text-sm font-medium text-teal-700 dark:text-teal-300">What is hyperhidrosis?</span>
 							</div>
 							<h2 id="about-hyperhidrosis-heading" className="text-2xl font-bold text-slate-800 dark:text-slate-100 sm:text-3xl mb-4">
-								Excessive sweating is real—and manageable
+								Excessive sweating is real and manageable
 							</h2>
 							<p className="text-slate-600 dark:text-slate-300 leading-relaxed text-base sm:text-lg">
-								<strong>Hyperhidrosis</strong> is a medical condition that causes excessive sweating—far more than your body needs to cool down. If your hands, feet, underarms, face, or other areas sweat heavily even when you’re not hot, nervous, or exercising, you may have it. Sweat can feel embarrassing or isolating, but it’s a real condition with real treatments. About 1 in 20 people experience it. HidroCare helps you track your sweat patterns, understand your triggers, and take steps toward better control.
+								1 in 20 people experience <strong>hyperhidrosis</strong>, a medical condition that causes excessive sweating — far more than your body needs to cool down. If your hands, feet, underarms, face, or other areas sweat heavily even when you’re not hot, nervous, or exercising, you may have it. Sweat can feel embarrassing or isolating, but it’s a real condition with real treatments. HidroCare helps you track your sweat patterns, understand your triggers, and take steps toward better control.
 							</p>
 						</div>
 					</div>

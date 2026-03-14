@@ -28,13 +28,13 @@ const SMALL_BUBBLES = [
 
 export function BubbleBackground({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-sky-50/80 via-blue-50/60 to-cyan-50/80 dark:from-slate-950 dark:via-slate-900/95 dark:to-sky-950/80">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-teal-50/80 via-teal-50/60 to-cyan-50/80 dark:from-slate-950 dark:via-slate-900/95 dark:to-teal-950/80">
       {/* Bubble layer */}
       <div className="pointer-events-none fixed inset-0 z-0">
         {BUBBLES.map((b, i) => (
           <div
             key={i}
-            className="absolute rounded-full bg-sky-200/40 dark:bg-sky-400/15 animate-[bubble-float_8s_ease-in-out_infinite]"
+            className="absolute rounded-full bg-teal-200/40 dark:bg-teal-400/15 animate-[bubble-float_8s_ease-in-out_infinite]"
             style={{
               width: b.size,
               height: b.size,
@@ -49,7 +49,7 @@ export function BubbleBackground({ children }: { children: React.ReactNode }) {
         {SMALL_BUBBLES.map(([size, left, top], i) => (
           <div
             key={`small-${i}`}
-            className="absolute rounded-full bg-cyan-200/30 dark:bg-cyan-500/10"
+            className="absolute rounded-full bg-teal-200/30 dark:bg-teal-500/10"
             style={{ width: size, height: size, left, top }}
           />
         ))}

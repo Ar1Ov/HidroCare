@@ -142,7 +142,7 @@ export function SupportPageContent() {
     <div className="flex flex-1 flex-col items-center py-8 md:py-12">
       <div className="flex h-full w-full max-w-2xl flex-col space-y-6">
         <div className="space-y-2 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-sky-900 dark:text-sky-100 sm:text-4xl">
+          <h1 className="text-3xl font-bold tracking-tight text-teal-900 dark:text-teal-100 sm:text-4xl">
             AI Support
           </h1>
           <p className="mx-auto max-w-lg text-base text-muted-foreground">
@@ -151,9 +151,9 @@ export function SupportPageContent() {
           </p>
         </div>
 
-        <Card className="flex flex-1 flex-col overflow-hidden border-sky-200/60 bg-white/80 shadow-lg shadow-sky-100/50 backdrop-blur-sm dark:border-sky-800/40 dark:bg-slate-900/80 dark:shadow-sky-950/30">
+        <Card className="flex flex-1 flex-col overflow-hidden border-teal-200/60 bg-white/80 shadow-lg shadow-teal-100/50 backdrop-blur-sm dark:border-teal-800/40 dark:bg-slate-900/80 dark:shadow-teal-950/30">
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg text-sky-900 dark:text-sky-100">
+            <CardTitle className="text-lg text-teal-900 dark:text-teal-100">
               Quick questions
             </CardTitle>
             <CardDescription>
@@ -169,14 +169,14 @@ export function SupportPageContent() {
                   type="button"
                   onClick={() => handleSuggestionClick(q)}
                   disabled={isLoading}
-                  className="rounded-full border border-sky-200 bg-sky-50/80 px-4 py-2 text-sm text-sky-800 transition-colors hover:border-sky-300 hover:bg-sky-100 disabled:opacity-50 dark:border-sky-700/50 dark:bg-sky-900/30 dark:text-sky-200 dark:hover:border-sky-600 dark:hover:bg-sky-800/40"
+                  className="rounded-full border border-teal-200 bg-teal-50/80 px-4 py-2 text-sm text-teal-800 transition-colors hover:border-teal-300 hover:bg-teal-100 disabled:opacity-50 dark:border-teal-700/50 dark:bg-teal-900/30 dark:text-teal-200 dark:hover:border-teal-600 dark:hover:bg-teal-800/40"
                 >
                   {q}
                 </button>
               ))}
             </div>
 
-            <div className="flex min-h-[200px] flex-1 flex-col overflow-hidden rounded-xl border border-sky-200/60 bg-sky-50/50 dark:border-sky-800/40 dark:bg-slate-800/50">
+            <div className="flex min-h-[200px] flex-1 flex-col overflow-hidden rounded-xl border border-teal-200/60 bg-teal-50/50 dark:border-teal-800/40 dark:bg-slate-800/50">
               {messages.length > 0 ? (
                 <div className="flex-1 space-y-4 overflow-y-auto p-4">
                   {messages.map((msg, i) => (
@@ -189,8 +189,8 @@ export function SupportPageContent() {
                       <div
                         className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
                           msg.role === "user"
-                            ? "bg-sky-600 text-white dark:bg-sky-500"
-                            : "bg-white text-foreground dark:bg-slate-700 dark:text-sky-100"
+                            ? "bg-teal-600 text-white dark:bg-teal-500"
+                            : "bg-white text-foreground dark:bg-slate-700 dark:text-teal-100"
                         }`}
                       >
                         <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -213,7 +213,7 @@ export function SupportPageContent() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Ask anything about hyperhidrosis..."
-                  className="min-h-[44px] max-h-32 resize-none border-sky-200 py-3 dark:border-sky-700/50 dark:bg-slate-900/50"
+                  className="min-h-[44px] max-h-32 resize-none border-teal-200 py-3 dark:border-teal-700/50 dark:bg-slate-900/50"
                   disabled={isLoading}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -225,7 +225,7 @@ export function SupportPageContent() {
                 <Button
                   type="submit"
                   size="icon"
-                  className="h-[44px] w-12 shrink-0 rounded-xl bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600"
+                  className="h-[44px] w-12 shrink-0 rounded-xl bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600"
                   disabled={isLoading || !input.trim()}
                 >
                   {isLoading ? (
