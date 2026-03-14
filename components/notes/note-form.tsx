@@ -186,7 +186,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
               {AREAS.map((area, index) => (
                 <div
                   key={area.id}
-                  className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:grid-cols-4"
+                  className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="font-medium">
                     {area.emoji} {area.label}
@@ -215,37 +215,6 @@ export function NoteForm({ note, mode }: NoteFormProps) {
                     >
                       /10
                     </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {TRIGGERS.map((trigger) => (
-                      <label
-                        key={trigger}
-                        className="cursor-pointer rounded bg-slate-100 px-2 py-0.5 text-xs dark:bg-slate-800"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={areaData[index].triggers.includes(trigger)}
-                          onChange={(e) => {
-                            const newTriggers = e.target.checked
-                              ? [...areaData[index].triggers, trigger]
-                              : areaData[index].triggers.filter((t) => t !== trigger);
-                            updateAreaData(index, "triggers", newTriggers);
-                          }}
-                          onBlur={triggerSave}
-                          className="mr-1"
-                        />
-                        {trigger}
-                      </label>
-                    ))}
-                  </div>
-                  <div>
-                    <Input
-                      placeholder="Duration (min)"
-                      value={areaData[index].duration}
-                      onChange={(e) => updateAreaData(index, "duration", e.target.value)}
-                      onBlur={triggerSave}
-                      className="text-xs"
-                    />
                   </div>
                 </div>
               ))}
