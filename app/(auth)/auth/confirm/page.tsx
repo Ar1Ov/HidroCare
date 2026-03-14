@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { EmailOtpType } from "@supabase/supabase-js";
@@ -13,7 +13,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
  * NEVER receives. This client page reads the hash, establishes the session,
  * then redirects to the target page.
  */
-export default function AuthConfirmPage() {
+function AuthConfirmContent() {
 	const searchParams = useSearchParams();
 	const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
 
@@ -84,5 +84,19 @@ export default function AuthConfirmPage() {
 				<p className="text-muted-foreground">Confirming your email…</p>
 			)}
 		</div>
+	);
+}
+
+export default function AuthConfirmPage() {
+	return (
+		<Suspense
+			fallback={
+				<div className="flex min-h-[200px] items-center justify-center">
+					<p className="text-muted-foreground">Confirming your email…</p>
+				</div>
+			}
+		>
+			<AuthConfirmContent />
+		</Suspense>
 	);
 }
