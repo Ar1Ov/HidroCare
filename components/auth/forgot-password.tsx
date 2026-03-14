@@ -12,6 +12,14 @@ export default function ForgotPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number>(0);
+  const [, setTick] = useState(0);
+
+  // Tick every second to update countdown display
+  useEffect(() => {
+    if (cooldownUntil <= Date.now()) return;
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, [cooldownUntil]);
 
   // Optional: persist cooldown across refresh
   useEffect(() => {
