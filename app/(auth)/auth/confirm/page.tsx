@@ -19,19 +19,22 @@ function AuthConfirmContent() {
 
 	useEffect(() => {
 		const next = searchParams.get("next");
+		const hash = typeof window !== "undefined" ? window.location.hash : "";
+		const hashParams = hash ? new URLSearchParams(hash.slice(1)) : null;
+		// Password reset uses type=recovery - default to update-password when next is missing
+		const isRecovery = hashParams?.get("type") === "recovery";
+		const defaultNext = isRecovery ? "/update-password" : "/dashboard";
 		const safeNext =
-			next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+			next && next.startsWith("/") && !next.startsWith("//") ? next : defaultNext;
 
 		async function handleAuth() {
 			const supabase = createClient();
 
 			// 1. Hash flow: Supabase puts tokens in #access_token=... (password reset, etc.)
 			//    The server never sees these - we must handle them here.
-			const hash = typeof window !== "undefined" ? window.location.hash : "";
-			if (hash) {
-				const params = new URLSearchParams(hash.slice(1)); // remove leading #
-				const access_token = params.get("access_token");
-				const refresh_token = params.get("refresh_token");
+			if (hash && hashParams) {
+				const access_token = hashParams.get("access_token");
+				const refresh_token = hashParams.get("refresh_token");
 
 				if (access_token && refresh_token) {
 					const { error } = await supabase.auth.setSession({
