@@ -91,6 +91,9 @@ export function LoginForm() {
 						{isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
 						Sign in
 					</Button>
+					<Link href="/forgot-password" className="text-sm hover:underline">
+              Forgot password?
+            </Link>
 					<p className="text-sm text-muted-foreground text-center">
 						Don&apos;t have an account?{" "}
 						<Link href="/signup" className="text-primary hover:underline">
