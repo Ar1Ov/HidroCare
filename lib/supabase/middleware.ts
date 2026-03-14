@@ -73,6 +73,7 @@ export async function updateSession(request: NextRequest) {
 	) {
 		const url = request.nextUrl.clone();
 		url.pathname = "/dashboard";
+		url.search = ""; // Don't carry error params to dashboard
 		return NextResponse.redirect(url);
 	}
 

@@ -74,6 +74,14 @@ function AuthConfirmContent() {
 				}
 			}
 
+			// 4. Session may already be set by Supabase client (e.g. auto-parse of hash)
+			//    - avoid redirecting to login when we're actually logged in
+			const { data: { session } } = await supabase.auth.getSession();
+			if (session) {
+				window.location.href = safeNext;
+				return;
+			}
+
 			// No valid auth data or all exchanges failed
 			window.location.href = `/login?error=confirmation_failed`;
 		}
