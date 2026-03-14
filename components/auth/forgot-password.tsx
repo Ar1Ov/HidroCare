@@ -47,9 +47,11 @@ export default function ForgotPasswordPage() {
     setCooldownUntil(now + COOLDOWN_MS);
 
     try {
+      // Must go through auth/confirm to exchange the code for a session, then redirect to update-password
+      // Add https://yourdomain.com/auth/confirm to Supabase Dashboard → Auth → URL Configuration → Redirect URLs
       const redirectTo =
         typeof window !== "undefined"
-          ? `${window.location.origin}/update-password`
+          ? `${window.location.origin}/auth/confirm?next=/update-password`
           : undefined;
 
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });

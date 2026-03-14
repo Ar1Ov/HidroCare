@@ -12,21 +12,30 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
 	const { searchParams, origin } = new URL(request.url);
 
-	// Get the code from the URL (Supabase adds this)
 	const code = searchParams.get("code");
+	const token_hash = searchParams.get("token_hash");
+	const type = searchParams.get("type");
+	const next = searchParams.get("next");
+
+	// Validate next - only allow internal paths (prevent open redirect)
+	const safeNext =
+		next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+
+	let success = false;
 
 	if (code) {
 		const supabase = await createClient();
-
-		// Exchange the code for a session
 		const { error } = await supabase.auth.exchangeCodeForSession(code);
-
-		if (!error) {
-			// Successfully confirmed! Redirect to dashboard
-			return NextResponse.redirect(`${origin}/dashboard`);
-		}
+		success = !error;
+	} else if (token_hash && type) {
+		const supabase = await createClient();
+		const { error } = await supabase.auth.verifyOtp({ token_hash, type });
+		success = !error;
 	}
 
-	// Something went wrong, redirect to login with error
+	if (success) {
+		return NextResponse.redirect(`${origin}${safeNext}`);
+	}
+
 	return NextResponse.redirect(`${origin}/login?error=confirmation_failed`);
 }
