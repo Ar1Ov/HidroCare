@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useAutoSave } from "@/lib/hooks/use-auto-save";
 import { SaveStatusIndicator } from "./save-status-indicator";
 import { DeleteNoteButton } from "./delete-note-button";
+import { NotesHelpDialog } from "./notes-help-dialog";
 import type { Tables } from "@/types/supabase";
 
 interface NoteFormProps {
@@ -137,12 +137,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <Link
-            href="/dashboard"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Back to Dashboard
-          </Link>
+          <NotesHelpDialog />
           <div className="flex items-center gap-2">
             <SaveStatusIndicator status={status} error={error} onRetry={triggerSave} />
             {mode === "edit" && note && (
@@ -363,6 +358,20 @@ export function NoteForm({ note, mode }: NoteFormProps) {
           <p className="text-xs text-muted-foreground">
             💾 Your log is automatically saved as you type
           </p>
+
+          {/* Submit / Back to Dashboard */}
+          <div className="pt-4">
+            <Button
+              type="button"
+              onClick={async () => {
+                await triggerSave();
+                router.push("/dashboard");
+              }}
+              className="w-full sm:w-auto"
+            >
+              Submit form
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

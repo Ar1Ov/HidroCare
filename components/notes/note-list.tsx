@@ -12,6 +12,7 @@ import {
 	EmptyTitle,
 } from "@/components/ui/empty";
 import { Plus, FileText } from "lucide-react";
+import { NotesHelpDialog } from "./notes-help-dialog";
 import { Tables } from "@/lib/supabase/database.types";
 
 interface NoteListProps {
@@ -32,12 +33,15 @@ export function NoteList({ notes }: NoteListProps) {
 					</EmptyDescription>
 				</EmptyHeader>
 				<EmptyContent>
-					<Link href="/notes/new">
-						<Button>
-							<Plus className="mr-2 h-4 w-4" />
-							Create note
-						</Button>
-					</Link>
+					<div className="flex items-center gap-2">
+						<NotesHelpDialog />
+						<Link href="/notes/new">
+							<Button>
+								<Plus className="mr-2 h-4 w-4" />
+								Create note
+							</Button>
+						</Link>
+					</div>
 				</EmptyContent>
 			</Empty>
 		);
@@ -45,7 +49,8 @@ export function NoteList({ notes }: NoteListProps) {
 
 	return (
 		<div className="space-y-4">
-			<div className="flex justify-end">
+			<div className="flex items-center justify-end gap-2">
+				<NotesHelpDialog />
 				<Link href="/notes/new">
 					<Button>
 						<Plus className="mr-2 h-4 w-4" />
