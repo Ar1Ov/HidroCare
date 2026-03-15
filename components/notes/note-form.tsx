@@ -49,6 +49,14 @@ const TRIGGERS = [
   "Hormonal",
 ];
 
+/** YYYY-MM-DD in local time (avoids UTC off-by-one day) */
+function toLocalDateString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export function NoteForm({ note, mode }: NoteFormProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -62,7 +70,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
     existingContent = {};
   }
   const [title, setTitle] = useState(
-    note?.title || `Log Entry - ${new Date().toISOString().split("T")[0]}`
+    note?.title || `Log Entry - ${toLocalDateString(new Date())}`
   );
   // Replace the date state handling to store as string directly
 
@@ -70,7 +78,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
   const now = new Date();
   const defaultTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   const [formData, setFormData] = useState<FormData>({
-	date: typeof existing.date === "string" ? existing.date.slice(0, 10) : now.toISOString().slice(0, 10),
+	date: typeof existing.date === "string" ? existing.date.slice(0, 10) : toLocalDateString(now),
 	time: typeof existing.time === "string" ? existing.time : defaultTime,
 	timeOfDay: (existing.timeOfDay as string) ?? "morning",
 	notes: (existing.notes as string) ?? "",
