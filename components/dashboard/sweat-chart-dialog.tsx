@@ -30,10 +30,25 @@ type ChartPoint = {
   other: number;
 };
 
-function formatDateLabel(date: string) {
-  // YYYY-MM-DD -> M/D
-  const [y, m, d] = date.split("-").map(Number);
-  if (!y || !m || !d) return date;
+type RangeKey = "24h" | "7d" | "30d" | "90d" | "180d" | "365d" | "all";
+
+const RANGE_OPTIONS: { value: RangeKey; label: string }[] = [
+  { value: "24h", label: "24 hours" },
+  { value: "7d", label: "Past week" },
+  { value: "30d", label: "Past month" },
+  { value: "90d", label: "Past 3 months" },
+  { value: "180d", label: "Past 6 months" },
+  { value: "365d", label: "Past year" },
+  { value: "all", label: "All time" },
+];
+
+function formatDateLabel(date: string, is24h: boolean) {
+  if (is24h && date.includes(" ")) {
+    const [, time] = date.split(" ");
+    return time?.slice(0, 5) ?? date; // HH:mm
+  }
+  const [y, m, d] = date.split(/[- ]/).map(Number);
+  if (!m || !d) return date;
   return `${m}/${d}`;
 }
 
@@ -42,6 +57,7 @@ export function SweatChartDialog() {
   const [loading, setLoading] = useState(false);
   const [points, setPoints] = useState<ChartPoint[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [range, setRange] = useState<RangeKey>("30d");
 
   useEffect(() => {
     if (!open) return;
@@ -53,7 +69,8 @@ export function SweatChartDialog() {
       setErr(null);
 
       try {
-        const res = await fetch("/api/auth/stats/", { cache: "no-store" });
+        const url = range === "all" ? "/api/auth/stats" : `/api/auth/stats?range=${range}`;
+        const res = await fetch(url, { cache: "no-store" });
         const json = await res.json();
 
         if (!res.ok) throw new Error(json?.error || "Failed to load stats");
@@ -69,13 +86,10 @@ export function SweatChartDialog() {
     return () => {
       cancelled = true;
     };
-  }, [open]);
+  }, [open, range]);
 
-  const chartData = useMemo(() => {
-    // If you want last 30 entries only:
-    // return points.slice(Math.max(0, points.length - 30));
-    return points;
-  }, [points]);
+  const chartData = useMemo(() => points, [points]);
+  const is24h = range === "24h";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -88,6 +102,19 @@ export function SweatChartDialog() {
       <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>Sweat Severity Over Time</DialogTitle>
+          <div className="flex flex-wrap gap-1.5 pt-2">
+            {RANGE_OPTIONS.map((opt) => (
+              <Button
+                key={opt.value}
+                size="sm"
+                variant={range === opt.value ? "default" : "outline"}
+                className="h-8 text-xs"
+                onClick={() => setRange(opt.value)}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
         </DialogHeader>
 
         {loading && (
@@ -109,9 +136,9 @@ export function SweatChartDialog() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" tickFormatter={formatDateLabel} />
+                <XAxis dataKey="date" tickFormatter={(v) => formatDateLabel(v, is24h)} />
                 <YAxis domain={[0, 10]} />
-                <Tooltip labelFormatter={(v) => `Date: ${v}`} />
+                <Tooltip labelFormatter={(v) => (is24h ? `Time: ${v}` : `Date: ${v}`)} />
                 <Legend />
 
                 <Line

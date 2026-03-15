@@ -26,7 +26,8 @@ type AreaEntry = {
   };
 
   type FormData = {
-	date: string;       // or Date, depending on your input
+	date: string;       // YYYY-MM-DD
+	time: string;       // HH:mm for precise logging
 	timeOfDay: string;  // e.g. "morning" | "afternoon" | "evening" | "night"
 	notes: string; 
   };
@@ -53,21 +54,31 @@ export function NoteForm({ note, mode }: NoteFormProps) {
   const supabase = createClient();
 
   // Parse existing content or use defaults
-  const existingContent = note?.content || {};
+  let existingContent: Record<string, unknown> = {};
+  try {
+    const raw = note?.content;
+    existingContent = typeof raw === "string" ? JSON.parse(raw) : (raw || {});
+  } catch {
+    existingContent = {};
+  }
   const [title, setTitle] = useState(
     note?.title || `Log Entry - ${new Date().toISOString().split("T")[0]}`
   );
   // Replace the date state handling to store as string directly
 
+  const existing = existingContent;
+  const now = new Date();
+  const defaultTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   const [formData, setFormData] = useState<FormData>({
-	date: new Date().toISOString().slice(0, 10),
-	timeOfDay: "morning",
-	notes: "",
+	date: typeof existing.date === "string" ? existing.date.slice(0, 10) : now.toISOString().slice(0, 10),
+	time: typeof existing.time === "string" ? existing.time : defaultTime,
+	timeOfDay: (existing.timeOfDay as string) ?? "morning",
+	notes: (existing.notes as string) ?? "",
   });
 
   const [areaData, setAreaData] = useState<AreaEntry[]>(
-	Array.isArray((existingContent as any)?.areas)
-	  ? (existingContent as any).areas
+	Array.isArray(existingContent?.areas)
+	  ? (existingContent.areas as AreaEntry[])
 	  : AREAS.map((area) => ({
 		  area: area.id,
 		  severity: 0,
@@ -77,7 +88,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
   );
 
   const [stressData, setStressData] = useState(
-    (existingContent as any)?.stress || {
+    (existingContent?.stress as Record<string, number>) || {
       anxiety: 0,
       socialImpact: 0,
       workImpact: 0,
@@ -86,19 +97,20 @@ export function NoteForm({ note, mode }: NoteFormProps) {
   );
 
   const [selectedTriggers, setSelectedTriggers] = useState<string[]>(
-    (existingContent as any)?.triggers || []
+    (existingContent?.triggers as string[]) || []
   );
-  const [episodes, setEpisodes] = useState((existingContent as any)?.episodes || "");
+  const [episodes, setEpisodes] = useState((existingContent?.episodes as string) || "");
   const [episodeTiming, setEpisodeTiming] = useState(
-    (existingContent as any)?.episodeTiming || ""
+    (existingContent?.episodeTiming as string) || ""
   );
   const [episodeType, setEpisodeType] = useState(
-    (existingContent as any)?.episodeType || ""
+    (existingContent?.episodeType as string) || ""
   );
 
   // Build content object for saving
   const buildContent = () => ({
     date: formData.date,
+    time: formData.time,
     timeOfDay: formData.timeOfDay,
     areas: areaData,
     stress: stressData,
@@ -159,19 +171,34 @@ export function NoteForm({ note, mode }: NoteFormProps) {
             className="border-0 p-0 text-lg font-semibold focus-visible:ring-0 focus-visible:ring-offset-0"
           />
 
-          {/* Date Selection */}
-          <div className="flex items-center gap-4">
-            <label htmlFor="date" className="text-sm font-medium">
-              📅 Date:
-            </label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              onBlur={triggerSave}
-              className="w-auto"
-            />
+          {/* Date & Time Selection */}
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2">
+              <label htmlFor="date" className="text-sm font-medium">
+                📅 Date:
+              </label>
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                onBlur={triggerSave}
+                className="w-auto"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label htmlFor="time" className="text-sm font-medium">
+                🕐 Time:
+              </label>
+              <Input
+                id="time"
+                type="time"
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                onBlur={triggerSave}
+                className="w-auto"
+              />
+            </div>
           </div>
 
           {/* 1️⃣ Daily Sweat Log */}
