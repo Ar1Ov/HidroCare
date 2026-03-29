@@ -36,6 +36,20 @@ function formatDate(iso: string | null) {
   }
 }
 
+/** Newest publication date first; items without a date last. */
+function sortByPubDateDesc<T extends { pubDate: string | null }>(items: T[]): T[] {
+  return [...items].sort((a, b) => {
+    const ta = a.pubDate ? Date.parse(a.pubDate) : NaN;
+    const tb = b.pubDate ? Date.parse(b.pubDate) : NaN;
+    const validA = !Number.isNaN(ta);
+    const validB = !Number.isNaN(tb);
+    if (!validA && !validB) return 0;
+    if (!validA) return 1;
+    if (!validB) return -1;
+    return tb - ta;
+  });
+}
+
 export function LatestNewsContent() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [research, setResearch] = useState<ResearchItem[]>([]);
@@ -60,8 +74,10 @@ export function LatestNewsContent() {
       if (!newsRes.ok) throw new Error(newsJson?.error || "Failed to load news");
       if (!researchRes.ok) throw new Error(researchJson?.error || "Failed to load research");
 
-      setNews(Array.isArray(newsJson.items) ? newsJson.items : []);
-      setResearch(Array.isArray(researchJson.items) ? researchJson.items : []);
+      const rawNews = Array.isArray(newsJson.items) ? newsJson.items : [];
+      const rawResearch = Array.isArray(researchJson.items) ? researchJson.items : [];
+      setNews(sortByPubDateDesc(rawNews));
+      setResearch(sortByPubDateDesc(rawResearch));
 
       if (isRefresh) toast.success("Updated!");
     } catch (e) {
