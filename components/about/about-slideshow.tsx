@@ -155,12 +155,22 @@ export function AboutSlideshow() {
     return () => window.removeEventListener("keydown", onKey);
   }, [index, goTo]);
 
-  const onPointerDown = (e: React.PointerEvent) => {
+  const swipeTargetInteractive = (target: EventTarget | null) => {
+    const el = target instanceof Element ? target : null;
+    return Boolean(
+      el?.closest(
+        "button, a, input, textarea, select, [role='dialog'], [data-radix-collection-item]",
+      ),
+    );
+  };
+
+  const onSwipePointerDown = (e: React.PointerEvent) => {
+    if (swipeTargetInteractive(e.target)) return;
     pointerStartX.current = e.clientX;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
-  const onPointerUp = (e: React.PointerEvent) => {
+  const onSwipePointerUp = (e: React.PointerEvent) => {
     const start = pointerStartX.current;
     pointerStartX.current = null;
     if (start == null) return;
@@ -475,15 +485,19 @@ export function AboutSlideshow() {
         role="region"
         aria-roledescription="carousel"
         aria-label="About hyperhidrosis sections"
-        className="relative touch-pan-y"
-        onPointerDown={onPointerDown}
-        onPointerUp={onPointerUp}
-        onPointerCancel={() => {
-          pointerStartX.current = null;
-        }}
+        className="relative"
       >
-        <div className="flex min-h-[min(72vh,38rem)] flex-col">
-          <Card
+        {/* Swipe only on the slide — not on controls. Pointer capture on an ancestor breaks button clicks. */}
+        <div
+          className="touch-pan-y"
+          onPointerDown={onSwipePointerDown}
+          onPointerUp={onSwipePointerUp}
+          onPointerCancel={() => {
+            pointerStartX.current = null;
+          }}
+        >
+          <div className="flex min-h-[min(72vh,38rem)] flex-col">
+            <Card
             id={current.anchorId}
             className="flex flex-1 flex-col overflow-hidden rounded-2xl border-2 border-teal-900/12 bg-card shadow-lg ring-1 ring-black/5 dark:border-teal-100/12 dark:ring-white/5"
           >
@@ -518,6 +532,7 @@ export function AboutSlideshow() {
               {current.content}
             </div>
           </Card>
+          </div>
         </div>
 
         <div className="mt-7 flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
