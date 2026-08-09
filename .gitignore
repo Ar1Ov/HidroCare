@@ -20,6 +20,12 @@
 # production
 /build
 
+# local package cache
+/.pnpm-store/
+
+# one-time survey import contains raw anonymous research responses
+/supabase/migrations/20260809000000_import_historical_survey_responses.sql
+
 # misc
 .DS_Store
 *.pem

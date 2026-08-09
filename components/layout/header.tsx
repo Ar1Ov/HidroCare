@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogoutButton } from "@/components/auth/logout-button";
-import { BookOpen, FileText, MessageCircle, Newspaper, User } from "lucide-react";
+import { BookOpen, ClipboardList, FileText, MessageCircle, Newspaper, User } from "lucide-react";
 
 interface HeaderProps {
 	userEmail?: string;
@@ -33,6 +33,16 @@ export function Header({ userEmail }: HeaderProps) {
 					<span>HidroCare</span>
 				</Link>
 				<nav className="ml-auto flex items-center gap-2 sm:gap-4">
+					<Link href="/survey">
+						<Button
+							variant={pathname === "/survey" ? "secondary" : "ghost"}
+							size="sm"
+							className="gap-2 text-teal-700 dark:text-teal-300"
+						>
+							<ClipboardList className="h-4 w-4" />
+							<span className="hidden sm:inline">Survey</span>
+						</Button>
+					</Link>
 					<Link href="/about">
 						<Button
 						variant={pathname === "/about" ? "secondary" : "ghost"}

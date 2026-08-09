@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { FileText, ArrowRight, Droplets } from "lucide-react";
+import { ArrowRight, BookOpen, Bot, ClipboardList, Droplets, FileText, NotebookPen } from "lucide-react";
 
 export default function HomePage() {
 	return (
@@ -11,6 +11,10 @@ export default function HomePage() {
 						<FileText className="h-5 w-5" />
 						<span>HidroCare</span>
 					</div>
+					<div className="hidden">
+						<span className="h-1.5 w-1.5 animate-pulse rounded-full bg-teal-500" />
+						Trusted by people who sweat heavily — you’re not alone
+					</div>
 					<nav className="flex items-center gap-1 sm:gap-2" aria-label="Main navigation">
 						<a
 							href="#about-hyperhidrosis"
@@ -18,6 +22,9 @@ export default function HomePage() {
 						>
 							About
 						</a>
+						<Link href="/survey">
+							<Button variant="ghost">Survey</Button>
+						</Link>
 						<Link href="/login">
 							<Button variant="ghost">Log in</Button>
 						</Link>
@@ -38,7 +45,11 @@ export default function HomePage() {
 					</div>
 
 					<div className="container flex flex-col items-center text-center gap-8 sm:gap-10">
-						<div className="rounded-full border border-teal-200/60 bg-white/60 px-4 py-2 text-sm text-teal-700 dark:border-teal-700/40 dark:bg-teal-950/40 dark:text-teal-300">
+						<div className="inline-flex items-center gap-2 rounded-full border border-teal-300/70 bg-white/70 px-4 py-2 text-sm font-bold text-teal-800 shadow-sm dark:border-teal-700/60 dark:bg-teal-950/60 dark:text-teal-200">
+							<span className="h-2 w-2 animate-pulse rounded-full bg-teal-500" />
+							Trusted by people who sweat heavily — you’re not alone
+						</div>
+						<div className="hidden">
 							Trusted by people who sweat heavily — you’re not alone
 						</div>
 
@@ -57,23 +68,40 @@ export default function HomePage() {
 							</p>
 						</div>
 
-						<div className="flex flex-col sm:flex-row gap-4 pt-2">
-							<Link href="/signup">
-								<Button size="lg" className="gap-2 px-8 py-6 text-base shadow-lg shadow-teal-900/20 bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
-									Get started
+						<div className="pt-2">
+							<Link href="/survey">
+								<Button size="lg" className="gap-2 bg-teal-600 px-8 py-6 text-base shadow-lg shadow-teal-900/20 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
+									<ClipboardList className="h-5 w-5" />
+									Participate in our anonymous hyperhidrosis survey
 									<ArrowRight className="h-4 w-4" />
 								</Button>
 							</Link>
-							<Link href="/login">
-								<Button
-									size="lg"
-									variant="outline"
-									className="px-8 py-6 text-base border-teal-300 dark:border-teal-600 text-slate-700 dark:text-slate-300 hover:bg-teal-50 dark:hover:bg-teal-950/50"
-								>
-									I have an account
-								</Button>
-							</Link>
 						</div>
+					</div>
+				</section>
+
+				{/* Member features */}
+				<section className="border-t border-teal-200/50 bg-slate-50/70 dark:border-teal-800/30 dark:bg-slate-950/40">
+					<div className="container py-16 sm:py-20">
+						<div className="mx-auto mb-10 max-w-2xl text-center">
+							<p className="text-sm font-semibold uppercase tracking-wider text-teal-700 dark:text-teal-300">Inside HidroCare</p>
+							<h2 className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">Tools that help you understand your sweating</h2>
+							<p className="mt-3 text-slate-600 dark:text-slate-300">Create a free account to track patterns, learn from reliable resources, and get support in one private place.</p>
+						</div>
+						<div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-3">
+							{[
+								{ icon: NotebookPen, title: "Sweat log", description: "Record symptoms, triggers, severity, and notes to see patterns over time." },
+								{ icon: Bot, title: "AI support chatbot", description: "Ask questions and explore practical support tailored to hyperhidrosis." },
+								{ icon: BookOpen, title: "Research & literature", description: "Browse helpful literature and current information about excessive sweating." },
+							].map(({ icon: Icon, title, description }) => (
+								<div key={title} className="rounded-2xl border border-teal-200/70 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-teal-800/50 dark:bg-slate-900">
+									<div className="mb-4 inline-flex rounded-xl bg-teal-100 p-3 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300"><Icon className="h-6 w-6" /></div>
+									<h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
+									<p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">{description}</p>
+								</div>
+							))}
+						</div>
+						<div className="mt-8 text-center"><Link href="/signup"><Button className="gap-2 bg-teal-600 hover:bg-teal-700">Create your free account <ArrowRight className="h-4 w-4" /></Button></Link></div>
 					</div>
 				</section>
 
