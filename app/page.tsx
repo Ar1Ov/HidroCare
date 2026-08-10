@@ -1,6 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen, Bot, ClipboardList, Droplets, FileText, NotebookPen } from "lucide-react";
+import { ArrowRight, BookOpen, Bot, ClipboardList, Droplets, NotebookPen } from "lucide-react";
 
 export default function HomePage() {
 	return (
@@ -8,7 +9,7 @@ export default function HomePage() {
 			<header className="sticky top-0 z-50 border-b border-teal-200/40 bg-white/80 backdrop-blur-md dark:border-teal-800/30 dark:bg-slate-900/80">
 				<div className="container flex h-14 items-center justify-between">
 					<div className="flex items-center gap-2 font-bold text-teal-800 dark:text-teal-200">
-						<FileText className="h-5 w-5" />
+						<Image src="/hidrocare-logo.png" alt="" width={28} height={28} className="h-7 w-7 rounded-md object-contain" priority />
 						<span>HidroCare</span>
 					</div>
 					<div className="hidden">

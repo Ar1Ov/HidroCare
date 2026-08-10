@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogoutButton } from "@/components/auth/logout-button";
-import { BookOpen, ClipboardList, FileText, MessageCircle, Newspaper, User } from "lucide-react";
+import { BookOpen, ClipboardList, MessageCircle, Newspaper, User } from "lucide-react";
 
 interface HeaderProps {
 	userEmail?: string;
@@ -29,7 +30,7 @@ export function Header({ userEmail }: HeaderProps) {
 					href="/dashboard"
 					className="flex items-center gap-2 font-bold text-teal-800 dark:text-teal-200"
 				>
-					<FileText className="h-5 w-5" />
+					<Image src="/hidrocare-logo.png" alt="" width={28} height={28} className="h-7 w-7 rounded-md object-contain" priority />
 					<span>HidroCare</span>
 				</Link>
 				<nav className="ml-auto flex items-center gap-2 sm:gap-4">

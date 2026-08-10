@@ -1,9 +1,10 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { BarChart3, ClipboardList, EyeOff, FileText, HeartHandshake, Loader2, RefreshCw } from "lucide-react";
+import { BarChart3, ClipboardList, EyeOff, HeartHandshake, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { SurveyCharts } from "@/components/survey/survey-charts";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ export function SurveyPageContent({ isAuthenticated = false }: { isAuthenticated
       <header className="sticky top-0 z-50 border-b border-teal-200/40 bg-white/80 backdrop-blur-md dark:border-teal-800/30 dark:bg-slate-900/80">
         <div className="container flex h-14 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold text-teal-800 dark:text-teal-200">
-            <FileText className="h-5 w-5" />
+            <Image src="/hidrocare-logo.png" alt="" width={28} height={28} className="h-7 w-7 rounded-md object-contain" priority />
             <span>HidroCare</span>
           </Link>
           <nav className="flex items-center gap-2">
