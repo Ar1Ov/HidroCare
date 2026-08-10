@@ -1,13 +1,14 @@
-import { createClient } from "@/lib/supabase/server";
-import OpenAI from "openai";
 import crypto from "crypto";
+import OpenAI from "openai";
+import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 const DAILY_LIMIT = 500;
 const DAILY_COST_CENTS_LIMIT = 50;
-const MAX_INPUT_CHARS = 800;
-const MAX_OUTPUT_TOKENS = 256;
+const MAX_INPUT_CHARS = 1200;
+const MAX_OUTPUT_TOKENS = 700;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MIN_SECONDS_BETWEEN_REQUESTS = 2;
 
 type GateResult = {
@@ -18,323 +19,226 @@ type GateResult = {
 };
 
 function roughTokenEstimate(text: string) {
-  return Math.ceil((text?.length ?? 0) / 4);
+  return Math.ceil((text.length || 0) / 4);
 }
 
-function hashPrompt(message: string, model: string) {
-  const normalized = message.trim().toLowerCase().replace(/[^\w\s]/g, "");
-  return crypto.createHash("sha256").update(`${model}|${normalized}`).digest("hex");
-}
-
-/* ===========================
-   PRESET HANDLING
-=========================== */
-
-function isPresetQuestion(message: string): boolean {
-  const lower = message.toLowerCase();
-
-  const presetPhrases = [
-    "what triggers excessive sweating",
-    "tips for managing sweat at work",
-    "when should i see a doctor",
-    "lifestyle changes that help",
-  ];
-
-  return presetPhrases.some((p) => lower.includes(p));
-}
-
-function freeModeResponse(message: string): string {
-  const lower = message.toLowerCase();
-
-  if (lower.includes("trigger")) {
-    return `
-Common triggers for excessive sweating include:
-
-• Stress and anxiety  
-• Heat and humidity  
-• Spicy foods  
-• Caffeine  
-• Tight or synthetic clothing  
-
-If sweating occurs without clear triggers or starts suddenly, consider speaking with a clinician.
-`.trim();
+function getResponseText(response: any): string {
+  if (typeof response?.output_text === "string" && response.output_text.trim()) {
+    return response.output_text.trim();
   }
-
-  if (lower.includes("doctor")) {
-    return `
-You should consider seeing a doctor if:
-
-• Sweating is sudden or worsening  
-• It happens at night with fever or weight loss  
-• You feel chest pain, fainting, or weakness  
-• It significantly affects daily life  
-
-A healthcare professional can help rule out underlying causes.
-`.trim();
-  }
-
-  if (lower.includes("work")) {
-    return `
-Helpful strategies for managing sweat at work:
-
-• Wear breathable fabrics  
-• Use clinical-strength antiperspirant at night  
-• Keep wipes or extra clothing available  
-• Practice calming breathing techniques  
-
-Small environmental adjustments can make a big difference.
-`.trim();
-  }
-
-  if (lower.includes("lifestyle")) {
-    return `
-Lifestyle changes that can help reduce sweating:
-
-• Dress for airflow (breathable fabrics, layers)  
-• Limit caffeine and spicy foods  
-• Practice stress-downshift routines  
-
-If symptoms are severe or new/sudden, consider speaking with a clinician.
-`.trim();
-  }
-
-  return `
-Hyperhidrosis is excessive sweating beyond normal temperature regulation.
-
-Options include:
-• Prescription-strength antiperspirants  
-• Iontophoresis  
-• Stress management  
-• Medical consultation if symptoms are severe  
-
-Educational info only — not medical advice.
-`.trim();
-}
-
-/* ===========================
-   RESPONSE TEXT EXTRACTION
-=========================== */
-
-function getResponseText(r: any): string {
-  if (typeof r?.output_text === "string" && r.output_text.trim()) {
-    return r.output_text.trim();
-  }
-
-  if (Array.isArray(r?.output)) {
-    for (const item of r.output) {
-      if (!Array.isArray(item?.content)) continue;
-
-      for (const part of item.content) {
-        if (part?.type === "output_text" && typeof part.text === "string") {
-          if (part.text.trim()) return part.text.trim();
-        }
-        if (typeof part?.text === "string" && part.text.trim()) {
-          return part.text.trim();
-        }
-        if (typeof part?.value === "string" && part.value.trim()) {
-          return part.value.trim();
-        }
-      }
+  for (const item of response?.output ?? []) {
+    for (const part of item?.content ?? []) {
+      if (typeof part?.text === "string" && part.text.trim()) return part.text.trim();
     }
   }
-
   return "";
 }
 
-/* ===========================
-   MAIN ROUTE
-=========================== */
+function completeSentenceReply(text: string): string {
+  const cleaned = text.trim().replace(/\s+/g, " ");
+  if (!cleaned) return "";
+  const complete = cleaned.match(/[^.!?]+[.!?]+(?:[\"')\]]+)?/g) ?? [];
+  if (complete.length > 0) return complete.slice(0, 8).join(" ").trim();
+  return `${cleaned.replace(/[,:;\-\s]+$/, "")}.`;
+}
+
+function fallbackResponse(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("doctor")) {
+    return "Consider seeing a clinician if sweating starts suddenly, worsens quickly, happens at night, or significantly affects daily life. Seek urgent care for sweating with chest pain, fainting, severe weakness, or trouble breathing. A clinician can help identify possible causes and treatment options. This is educational information, not medical advice.";
+  }
+  if (lower.includes("trigger")) {
+    return "Common sweating triggers include heat, humidity, stress, anxiety, exercise, caffeine, spicy foods, and some medications. Keeping a brief sweat log can help you identify your own patterns. Sudden or unexplained changes are worth discussing with a clinician. This is educational information, not medical advice.";
+  }
+  return "Hyperhidrosis is sweating beyond what the body needs for cooling. Helpful options can include clinical-strength antiperspirants, breathable clothing, trigger tracking, iontophoresis, and medical treatment. A clinician can help if symptoms are new, severe, or disruptive. This is educational information, not medical advice.";
+}
 
 export async function POST(req: Request) {
-  let userMessage = "";
-  const request_id = crypto.randomBytes(8).toString("hex");
+  const requestId = crypto.randomBytes(8).toString("hex");
+  let fallbackMessage = "";
 
   try {
     const supabase = await createClient();
     const {
       data: { user },
-      error: userErr,
+      error: userError,
     } = await supabase.auth.getUser();
 
-    if (userErr) return Response.json({ error: userErr.message }, { status: 401 });
-    if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (userError || !user) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      return Response.json({ error: "Missing OPENAI_API_KEY" }, { status: 503 });
-    }
+    if (!apiKey) return Response.json({ error: "Missing OPENAI_API_KEY" }, { status: 503 });
 
     const body = await req.json().catch(() => null);
-    const message = body?.message;
+    const message = typeof body?.message === "string" ? body.message.trim() : "";
+    const requestedConversationId =
+      typeof body?.conversationId === "string" ? body.conversationId : null;
+    const imagePath = typeof body?.imagePath === "string" ? body.imagePath : null;
+    const imageName = typeof body?.imageName === "string" ? body.imageName.slice(0, 200) : null;
+    fallbackMessage = message;
 
-    if (!message || typeof message !== "string") {
-      return Response.json({ error: "Message is required" }, { status: 400 });
+    if (!message && !imagePath) {
+      return Response.json({ error: "A message or image is required" }, { status: 400 });
     }
-
-    const trimmed = message.trim();
-    userMessage = trimmed;
-
-    if (!trimmed) {
-      return Response.json({ error: "Message is required" }, { status: 400 });
-    }
-
-    if (trimmed.length > MAX_INPUT_CHARS) {
+    if (message.length > MAX_INPUT_CHARS) {
       return Response.json(
-        { error: `Message too long. Max ${MAX_INPUT_CHARS} characters.` },
-        { status: 413 }
+        { error: `Message too long. Maximum ${MAX_INPUT_CHARS} characters.` },
+        { status: 413 },
       );
     }
 
-    /* ===========================
-       PING TEST
-    =========================== */
-
-    if (trimmed === "__ping__") {
-      const openai = new OpenAI({ apiKey });
-      const r: any = await openai.responses.create({
-        model: "gpt-5-nano",
-        input: [{ role: "user", content: "Reply with exactly: OK" }],
-        reasoning: { effort: "low" },
-        text: { verbosity: "low" },
-        max_output_tokens: 16,
-      });
-
-      const reply = getResponseText(r) || "OK";
-
-      return Response.json({
-        reply,
-        fallback: false,
-        source: "ai_ping",
-        request_id,
-      });
+    let conversationId = requestedConversationId;
+    if (conversationId) {
+      const { data: existing } = await (supabase as any)
+        .from("ai_conversations")
+        .select("id")
+        .eq("id", conversationId)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!existing) conversationId = null;
     }
 
-    /* ===========================
-       PRESET SHORT-CIRCUIT
-    =========================== */
-
-    if (isPresetQuestion(trimmed)) {
-      return Response.json({
-        reply: freeModeResponse(trimmed),
-        fallback: false,
-        source: "preset",
-        request_id,
-      });
+    if (!conversationId) {
+      const { data: created, error: createError } = await (supabase as any)
+        .from("ai_conversations")
+        .insert({
+          user_id: user.id,
+          title: (message || imageName || "Image question").slice(0, 60),
+        })
+        .select("id")
+        .single();
+      if (createError) {
+        return Response.json(
+          { error: "Chat history is not set up yet. Apply the AI chat history migration." },
+          { status: 503 },
+        );
+      }
+      conversationId = created.id;
     }
 
-    /* ===========================
-       LIMITER
-    =========================== */
-
-    const dayStr = new Date().toISOString().slice(0, 10);
-    const estInputTokens = roughTokenEstimate(trimmed) + 200;
-    const estOutputTokens = MAX_OUTPUT_TOKENS;
-
-    const rpc = (supabase as any).rpc.bind(supabase as any);
-
-    const gateResp = await rpc("ai_check_and_increment", {
-      p_user_id: user.id,
-      p_day: dayStr,
-      p_daily_message_limit: DAILY_LIMIT,
-      p_daily_cost_cents_limit: DAILY_COST_CENTS_LIMIT,
-      p_add_messages: 1,
-      p_add_input_tokens: estInputTokens,
-      p_add_output_tokens: estOutputTokens,
-      p_min_seconds_between_requests: MIN_SECONDS_BETWEEN_REQUESTS,
-    }).single();
-
-    const gate = gateResp?.data as GateResult;
-
-    if (!gate?.allowed) {
-      return Response.json({
-        reply: freeModeResponse(trimmed),
-        fallback: true,
-        source: "gate",
-        request_id,
-      });
+    let imageDataUrl: string | null = null;
+    if (imagePath) {
+      if (!imagePath.startsWith(`${user.id}/`)) {
+        return Response.json({ error: "Invalid image path" }, { status: 403 });
+      }
+      const { data: imageBlob, error: imageError } = await supabase.storage
+        .from("ai-chat-images")
+        .download(imagePath);
+      if (imageError || !imageBlob) {
+        return Response.json({ error: "Image could not be loaded" }, { status: 400 });
+      }
+      if (imageBlob.size > MAX_IMAGE_BYTES) {
+        return Response.json({ error: "Image must be 5 MB or smaller" }, { status: 413 });
+      }
+      const bytes = Buffer.from(await imageBlob.arrayBuffer());
+      imageDataUrl = `data:${imageBlob.type};base64,${bytes.toString("base64")}`;
     }
 
-    /* ===========================
-       OPENAI CALL
-    =========================== */
-
-    const openai = new OpenAI({ apiKey });
-
-    const baseParams = {
-      model: "gpt-5-nano",
-      input:
-        "System: You are a friendly and supportive hyperhidrosis education assistant. Answer DIRECTLY, but also conversationally" +
-        "Give calm, practical guidance. Do NOT diagnose. Keep replies between 3-5 sentences. End with a complete sentence. \n\n" +
-        "User: " +
-        trimmed,
-      reasoning: { effort: "low" as const },
-      text: { verbosity: "low" as const },
-      max_output_tokens: MAX_OUTPUT_TOKENS,
-    };
-
-    let response: any = await openai.responses.create(baseParams);
-
-    // Retry if reasoning consumed full token budget
-    if (
-      !(getResponseText(response) || "").trim() &&
-      response?.status === "incomplete" &&
-      response?.incomplete_details?.reason === "max_output_tokens"
-    ) {
-      response = await openai.responses.create({
-        ...baseParams,
-        max_output_tokens: 400,
-        input:
-  "System: Answer briefly in plain text.\n\nUser: " + trimmed,
-       // input: [
-        //  { role: "system", content: "Answer briefly in plain text." },
-        //  { role: "user", content: trimmed },
-       // ],
-      });
-    }
-
-    const reply = (getResponseText(response) || "").trim();
-
-const seemsCutOff =
-  response?.status === "incomplete" ||
-  /[,:;(\-]$/.test(reply) ||                 // ends with hanging punctuation
-  (reply && !/[.!?]$/.test(reply));          // doesn't end with sentence punctuation
-
-if (seemsCutOff) {
-  const r2: any = await openai.responses.create({
-    model: "gpt-5-nano",
-    input: "Finish the last sentence cleanly in 1 sentence:\n\n" + reply,
-    reasoning: { effort: "low" as const },
-    text: { verbosity: "low" as const },
-    max_output_tokens: 80,
-  });
-
-  const add = (getResponseText(r2) || "").trim();
-  if (add) return Response.json({ reply: (reply + " " + add).trim(), fallback: false, source: "ai" });
-}
-
-    if (!reply) {
-      return Response.json({
-        reply: freeModeResponse(trimmed),
-        fallback: true,
-        source: "ai_empty",
-        request_id,
-      });
-    }
-
-    return Response.json({
-      reply,
-      fallback: false,
-      source: "ai",
-      request_id,
+    await (supabase as any).from("ai_messages").insert({
+      conversation_id: conversationId,
+      user_id: user.id,
+      role: "user",
+      content: message,
+      image_path: imagePath,
+      image_name: imageName,
     });
 
-  } catch (err: any) {
-    console.error("AI error:", err?.message);
+    const finish = async (rawReply: string, fallback: boolean, source: string) => {
+      const reply = completeSentenceReply(rawReply);
+      await (supabase as any).from("ai_messages").insert({
+        conversation_id: conversationId,
+        user_id: user.id,
+        role: "assistant",
+        content: reply,
+      });
+      await (supabase as any)
+        .from("ai_conversations")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", conversationId)
+        .eq("user_id", user.id);
+      return Response.json({
+        reply,
+        fallback,
+        source,
+        request_id: requestId,
+        conversationId,
+      });
+    };
 
+    const day = new Date().toISOString().slice(0, 10);
+    const gateResponse = await (supabase as any)
+      .rpc("ai_check_and_increment", {
+        p_user_id: user.id,
+        p_day: day,
+        p_daily_message_limit: DAILY_LIMIT,
+        p_daily_cost_cents_limit: DAILY_COST_CENTS_LIMIT,
+        p_add_messages: 1,
+        p_add_input_tokens: roughTokenEstimate(message) + (imagePath ? 1000 : 200),
+        p_add_output_tokens: MAX_OUTPUT_TOKENS,
+        p_min_seconds_between_requests: MIN_SECONDS_BETWEEN_REQUESTS,
+      })
+      .single();
+    const gate = gateResponse?.data as GateResult | null;
+    if (gate && !gate.allowed) return finish(fallbackResponse(message), true, "gate");
+
+    const userContent: any[] = [
+      {
+        type: "input_text",
+        text: message || "Explain any hyperhidrosis-relevant visible details in this image.",
+      },
+    ];
+    if (imageDataUrl) {
+      userContent.push({ type: "input_image", image_url: imageDataUrl, detail: "auto" });
+    }
+
+    const openai = new OpenAI({ apiKey });
+    const input: any[] = [
+      {
+        role: "developer",
+        content:
+          "You are a friendly hyperhidrosis education assistant. Give calm, practical guidance without diagnosing. Reply in no more than 8 complete sentences, usually 3 to 6. Never stop mid-sentence. If an image is provided, discuss only relevant visible details and clearly state uncertainty. This is educational support, not medical advice.",
+      },
+      { role: "user", content: userContent },
+    ];
+
+    let response: any = await openai.responses.create({
+      model: "gpt-5-nano",
+      input,
+      reasoning: { effort: "low" },
+      text: { verbosity: "low" },
+      max_output_tokens: MAX_OUTPUT_TOKENS,
+    });
+    let reply = getResponseText(response);
+
+    const cutOff =
+      response?.status === "incomplete" || (reply.length > 0 && !/[.!?][\"')\]]?$/.test(reply));
+    if (cutOff) {
+      response = await openai.responses.create({
+        model: "gpt-5-nano",
+        input: [
+          ...input,
+          {
+            role: "developer",
+            content:
+              "Rewrite the answer from the beginning in at most 8 short, complete sentences. Finish the final sentence.",
+          },
+        ],
+        reasoning: { effort: "low" },
+        text: { verbosity: "low" },
+        max_output_tokens: 900,
+      });
+      reply = getResponseText(response);
+    }
+
+    if (!reply) return finish(fallbackResponse(message), true, "ai_empty");
+    return finish(reply, false, "ai");
+  } catch (error: any) {
+    console.error("AI Support error:", error?.message);
     return Response.json({
-      reply: freeModeResponse(userMessage),
+      reply: fallbackResponse(fallbackMessage),
       fallback: true,
       source: "catch",
+      request_id: requestId,
     });
   }
 }
