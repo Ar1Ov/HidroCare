@@ -8,6 +8,7 @@ import {
   Loader2,
   MessageSquare,
   Plus,
+  Pencil,
   Send,
   Sparkles,
   Trash2,
@@ -62,6 +63,7 @@ export function SupportPageContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -124,6 +126,7 @@ export function SupportPageContent() {
     setConversationId(null);
     setMessages([]);
     setInput("");
+    setEditingMessageId(null);
     clearImage();
     textareaRef.current?.focus();
   }
@@ -148,6 +151,14 @@ export function SupportPageContent() {
     clearImage();
     setImage(file);
     setImagePreview(URL.createObjectURL(file));
+  }
+
+  function beginEdit(message: ChatMessage) {
+    if (!message.id || message.role !== "user") return;
+    setEditingMessageId(message.id);
+    setInput(message.content);
+    clearImage();
+    textareaRef.current?.focus();
   }
 
   async function deleteHistory(targetId?: string) {
@@ -188,11 +199,23 @@ export function SupportPageContent() {
 
     const pendingPreview = imagePreview;
     const pendingName = image?.name ?? null;
-    setMessages((current) => [
-      ...current,
-      { role: "user", content: message, image_name: pendingName, imageUrl: pendingPreview },
-      { role: "assistant", content: "Thinking…" },
-    ]);
+    setMessages((current) => {
+      if (editingMessageId) {
+        const editIndex = current.findIndex((item) => item.id === editingMessageId);
+        if (editIndex >= 0) {
+          return [
+            ...current.slice(0, editIndex),
+            { ...current[editIndex], content: message },
+            { role: "assistant", content: "Thinking…" },
+          ];
+        }
+      }
+      return [
+        ...current,
+        { role: "user", content: message, image_name: pendingName, imageUrl: pendingPreview },
+        { role: "assistant", content: "Thinking…" },
+      ];
+    });
     setInput("");
     setIsLoading(true);
 
@@ -215,6 +238,7 @@ export function SupportPageContent() {
           conversationId,
           imagePath,
           imageName: pendingName,
+          editMessageId: editingMessageId,
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -225,9 +249,12 @@ export function SupportPageContent() {
         return next;
       });
       if (!response.ok) throw new Error(reply);
-      setConversationId(data.conversationId ?? conversationId);
+      const activeConversationId = data.conversationId ?? conversationId;
+      setConversationId(activeConversationId);
+      setEditingMessageId(null);
       clearImage();
       await loadConversations();
+      if (activeConversationId) await loadMessages(activeConversationId);
     } catch (error) {
       const text = error instanceof Error ? error.message : "Network error. Please try again.";
       setMessages((current) => {
@@ -236,10 +263,13 @@ export function SupportPageContent() {
         return next;
       });
       toast.error(text);
+      if (conversationId) await loadMessages(conversationId);
     } finally {
       setIsLoading(false);
     }
   }
+
+  const latestUserMessageId = [...messages].reverse().find((message) => message.role === "user")?.id;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 py-6 md:py-10">
@@ -296,7 +326,7 @@ export function SupportPageContent() {
                 <Bot className="h-8 w-8" />
               </div>
               <h2 className="mt-4 text-xl font-semibold">How can I help today?</h2>
-              <p className="mt-1 max-w-md text-sm text-muted-foreground">Choose a prompt or ask your own question. Replies are kept concise and complete.</p>
+              <p className="mt-1 max-w-md text-sm text-muted-foreground">Choose a prompt or ask your own question to get started.</p>
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 {SUGGESTIONS.map((suggestion) => (
                   <button
@@ -320,9 +350,16 @@ export function SupportPageContent() {
                   {message.role === "assistant" ? (
                     <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/60 dark:text-teal-200"><Bot className="h-4 w-4" /></div>
                   ) : null}
-                  <div className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${message.role === "user" ? "rounded-br-md bg-teal-600 text-white" : "rounded-bl-md border bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"}`}>
+                  <div className="group/message relative max-w-[82%]">
+                  <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${message.role === "user" ? "rounded-br-md bg-teal-600 text-white" : "rounded-bl-md border bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"}`}>
                     {message.imageUrl ? <img src={message.imageUrl} alt={message.image_name ?? "Uploaded image"} className="mb-3 max-h-64 rounded-lg object-contain" /> : null}
                     {message.content ? <p className="whitespace-pre-wrap">{message.content}</p> : null}
+                  </div>
+                  {message.role === "user" && message.id === latestUserMessageId && !isLoading ? (
+                    <button type="button" onClick={() => beginEdit(message)} className="absolute -bottom-8 right-0 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground opacity-0 transition hover:bg-muted hover:text-foreground group-hover/message:opacity-100 focus:opacity-100" aria-label="Edit most recent message">
+                      <Pencil className="h-3 w-3" /> Edit
+                    </button>
+                  ) : null}
                   </div>
                   {message.role === "user" ? (
                     <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100"><UserRound className="h-4 w-4" /></div>
@@ -334,6 +371,12 @@ export function SupportPageContent() {
           )}
 
           <div className="border-t border-teal-200/60 bg-white/80 p-4 dark:border-teal-800/40 dark:bg-slate-900/80">
+            {editingMessageId ? (
+              <div className="mb-2 flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+                <span>Editing your most recent message; sending will replace the previous reply.</span>
+                <button type="button" onClick={() => { setEditingMessageId(null); setInput(""); }} className="rounded p-1 hover:bg-amber-100 dark:hover:bg-amber-900/50" aria-label="Cancel editing"><X className="h-4 w-4" /></button>
+              </div>
+            ) : null}
             {imagePreview ? (
               <div className="mb-3 inline-flex items-start gap-2 rounded-xl border border-teal-200 bg-teal-50 p-2 dark:border-teal-800 dark:bg-teal-950/40">
                 <img src={imagePreview} alt="Selected upload" className="h-20 w-20 rounded-lg object-cover" />

@@ -75,6 +75,7 @@ export async function POST(req: Request) {
       typeof body?.conversationId === "string" ? body.conversationId : null;
     const imagePath = typeof body?.imagePath === "string" ? body.imagePath : null;
     const imageName = typeof body?.imageName === "string" ? body.imageName.slice(0, 200) : null;
+    const editMessageId = typeof body?.editMessageId === "string" ? body.editMessageId : null;
     fallbackMessage = message;
 
     if (!message && !imagePath) {
@@ -116,14 +117,35 @@ export async function POST(req: Request) {
       conversationId = created.id;
     }
 
+    let effectiveImagePath = imagePath;
+    let effectiveImageName = imageName;
+    let editedMessage: any = null;
+    if (editMessageId) {
+      const { data: latestUserMessage } = await (supabase as any)
+        .from("ai_messages")
+        .select("id,created_at,image_path,image_name")
+        .eq("conversation_id", conversationId)
+        .eq("user_id", user.id)
+        .eq("role", "user")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!latestUserMessage || latestUserMessage.id !== editMessageId) {
+        return Response.json({ error: "Only your most recent message can be edited" }, { status: 400 });
+      }
+      editedMessage = latestUserMessage;
+      effectiveImagePath = imagePath ?? latestUserMessage.image_path;
+      effectiveImageName = imageName ?? latestUserMessage.image_name;
+    }
+
     let imageDataUrl: string | null = null;
-    if (imagePath) {
-      if (!imagePath.startsWith(`${user.id}/`)) {
+    if (effectiveImagePath) {
+      if (!effectiveImagePath.startsWith(`${user.id}/`)) {
         return Response.json({ error: "Invalid image path" }, { status: 403 });
       }
       const { data: imageBlob, error: imageError } = await supabase.storage
         .from("ai-chat-images")
-        .download(imagePath);
+        .download(effectiveImagePath);
       if (imageError || !imageBlob) {
         return Response.json({ error: "Image could not be loaded" }, { status: 400 });
       }
@@ -134,14 +156,32 @@ export async function POST(req: Request) {
       imageDataUrl = `data:${imageBlob.type};base64,${bytes.toString("base64")}`;
     }
 
-    await (supabase as any).from("ai_messages").insert({
-      conversation_id: conversationId,
-      user_id: user.id,
-      role: "user",
-      content: message,
-      image_path: imagePath,
-      image_name: imageName,
-    });
+    if (editedMessage) {
+      await (supabase as any)
+        .from("ai_messages")
+        .delete()
+        .eq("conversation_id", conversationId)
+        .eq("user_id", user.id)
+        .gt("created_at", editedMessage.created_at);
+      await (supabase as any)
+        .from("ai_messages")
+        .update({
+          content: message,
+          image_path: effectiveImagePath,
+          image_name: effectiveImageName,
+        })
+        .eq("id", editMessageId)
+        .eq("user_id", user.id);
+    } else {
+      await (supabase as any).from("ai_messages").insert({
+        conversation_id: conversationId,
+        user_id: user.id,
+        role: "user",
+        content: message,
+        image_path: effectiveImagePath,
+        image_name: effectiveImageName,
+      });
+    }
 
     const finish = async (rawReply: string, fallback: boolean, source: string) => {
       const reply = completeSentenceReply(rawReply);
@@ -173,7 +213,7 @@ export async function POST(req: Request) {
         p_daily_message_limit: DAILY_LIMIT,
         p_daily_cost_cents_limit: DAILY_COST_CENTS_LIMIT,
         p_add_messages: 1,
-        p_add_input_tokens: roughTokenEstimate(message) + (imagePath ? 1000 : 200),
+        p_add_input_tokens: roughTokenEstimate(message) + (effectiveImagePath ? 1000 : 200),
         p_add_output_tokens: MAX_OUTPUT_TOKENS,
         p_min_seconds_between_requests: MIN_SECONDS_BETWEEN_REQUESTS,
       })
