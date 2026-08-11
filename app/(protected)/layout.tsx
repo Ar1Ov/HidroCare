@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/header";
+import { SiteFooter } from "@/components/layout/site-footer";
 
 /**
  * Layout for protected pages (requires authentication).
@@ -21,6 +22,7 @@ export default async function ProtectedLayout({
 		<div className="flex min-h-screen flex-col">
 			<Header userEmail={user?.email} />
 			<main className="flex flex-1 flex-col container py-6">{children}</main>
+			<SiteFooter />
 		</div>
 	);
 }

@@ -10,6 +10,7 @@ import {
   Plus,
   Send,
   Sparkles,
+  Trash2,
   UserRound,
   X,
 } from "lucide-react";
@@ -60,6 +61,7 @@ export function SupportPageContent() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -148,6 +150,38 @@ export function SupportPageContent() {
     setImagePreview(URL.createObjectURL(file));
   }
 
+  async function deleteHistory(targetId?: string) {
+    const deletingAll = !targetId;
+    const confirmed = window.confirm(
+      deletingAll
+        ? "Delete all of your AI chat history and attached images? This cannot be undone."
+        : "Delete this conversation and its attached images? This cannot be undone.",
+    );
+    if (!confirmed) return;
+
+    setDeletingId(targetId ?? "all");
+    try {
+      const response = await fetch("/api/auth/ai/history", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(targetId ? { conversationId: targetId } : { all: true }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.error || "Could not delete chat history");
+
+      if (deletingAll || conversationId === targetId) startNewChat();
+      const remaining = await loadConversations();
+      if (!deletingAll && conversationId === targetId && remaining[0]) {
+        await loadMessages(remaining[0].id);
+      }
+      toast.success(deletingAll ? "All AI history deleted" : "Conversation deleted");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not delete chat history");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function sendMessage(text: string) {
     const message = text.trim();
     if ((!message && !image) || isLoading || !userId) return;
@@ -226,8 +260,13 @@ export function SupportPageContent() {
           <Button onClick={startNewChat} className="w-full gap-2 bg-teal-600 hover:bg-teal-700">
             <Plus className="h-4 w-4" /> New chat
           </Button>
-          <div className="mt-5 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            <History className="h-4 w-4" /> Your history
+          <div className="mt-5 flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <span className="flex items-center gap-2"><History className="h-4 w-4" /> Your history</span>
+            {conversations.length > 0 ? (
+              <button type="button" onClick={() => void deleteHistory()} disabled={Boolean(deletingId)} className="normal-case tracking-normal text-red-600 hover:text-red-700 disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300">
+                Clear all
+              </button>
+            ) : null}
           </div>
           <div className="mt-2 flex gap-2 overflow-x-auto pb-1 md:max-h-[500px] md:flex-col md:overflow-y-auto">
             {historyLoading ? (
@@ -236,21 +275,15 @@ export function SupportPageContent() {
               <p className="p-2 text-sm text-muted-foreground">No saved conversations yet.</p>
             ) : (
               conversations.map((conversation) => (
-                <button
-                  key={conversation.id}
-                  type="button"
-                  onClick={() => void loadMessages(conversation.id)}
-                  className={`min-w-48 rounded-lg px-3 py-2 text-left text-sm transition md:min-w-0 ${
-                    conversationId === conversation.id
-                      ? "bg-teal-600 font-semibold text-white"
-                      : "text-foreground hover:bg-teal-100 dark:hover:bg-teal-900/40"
-                  }`}
-                >
-                  <span className="block truncate">{conversation.title}</span>
-                  <span className={`mt-0.5 block text-xs ${conversationId === conversation.id ? "text-teal-50" : "text-muted-foreground"}`}>
-                    {new Date(conversation.updated_at).toLocaleDateString()}
-                  </span>
-                </button>
+                <div key={conversation.id} className={`group flex min-w-48 items-center rounded-lg transition md:min-w-0 ${conversationId === conversation.id ? "bg-teal-600 text-white" : "hover:bg-teal-100 dark:hover:bg-teal-900/40"}`}>
+                  <button type="button" onClick={() => void loadMessages(conversation.id)} className="min-w-0 flex-1 px-3 py-2 text-left text-sm">
+                    <span className={`block truncate ${conversationId === conversation.id ? "font-semibold" : ""}`}>{conversation.title}</span>
+                    <span className={`mt-0.5 block text-xs ${conversationId === conversation.id ? "text-teal-50" : "text-muted-foreground"}`}>{new Date(conversation.updated_at).toLocaleDateString()}</span>
+                  </button>
+                  <button type="button" onClick={() => void deleteHistory(conversation.id)} disabled={Boolean(deletingId)} className={`mr-1 rounded-md p-2 opacity-70 transition hover:opacity-100 disabled:opacity-30 ${conversationId === conversation.id ? "hover:bg-teal-700" : "text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"}`} aria-label={`Delete ${conversation.title}`}>
+                    {deletingId === conversation.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </button>
+                </div>
               ))
             )}
           </div>

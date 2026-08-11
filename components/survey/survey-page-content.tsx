@@ -8,6 +8,7 @@ import { BarChart3, ClipboardList, EyeOff, HeartHandshake, Loader2, RefreshCw } 
 import { toast } from "sonner";
 import { SurveyCharts } from "@/components/survey/survey-charts";
 import { Button } from "@/components/ui/button";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { emptySurveyStats, type SurveyStats } from "@/lib/survey/schema";
 
 const POLL_MS = 10_000;
@@ -150,6 +151,7 @@ export function SurveyPageContent({ isAuthenticated = false }: { isAuthenticated
           )}
         </section>
       </main>
+      <SiteFooter />
     </div>
   );
 }

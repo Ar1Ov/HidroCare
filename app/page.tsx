@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { ArrowRight, BookOpen, Bot, ClipboardList, Droplets, NotebookPen } from "lucide-react";
 
 export default function HomePage() {
@@ -128,6 +129,7 @@ export default function HomePage() {
 					</div>
 				</section>
 			</main>
+			<SiteFooter />
 		</div>
 	);
 }
