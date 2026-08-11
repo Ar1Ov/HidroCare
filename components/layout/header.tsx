@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogoutButton } from "@/components/auth/logout-button";
-import { BookOpen, ClipboardList, MessageCircle, Newspaper, User } from "lucide-react";
+import { BookOpen, ClipboardList, MapPin, MessageCircle, Newspaper, User } from "lucide-react";
 
 interface HeaderProps {
 	userEmail?: string;
@@ -25,15 +25,15 @@ export function Header({ userEmail }: HeaderProps) {
 
 	return (
 		<header className="sticky top-0 z-50 w-full border-b border-teal-200/50 bg-white/60 backdrop-blur-md dark:border-teal-800/30 dark:bg-slate-900/60 supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-slate-900/60">
-			<div className="container flex h-14 items-center">
+			<div className="flex h-14 w-full items-center px-2 sm:px-4">
 				<Link
 					href="/dashboard"
-					className="flex items-center gap-2 font-bold text-teal-800 dark:text-teal-200"
+					className="flex shrink-0 items-center gap-2 font-bold text-teal-800 dark:text-teal-200"
 				>
 					<Image src="/hidrocare-logo.png" alt="" width={28} height={28} className="h-7 w-7 rounded-md object-contain" priority />
 					<span>HidroCare</span>
 				</Link>
-				<nav className="ml-auto flex items-center gap-2 sm:gap-4">
+				<nav className="ml-auto flex min-w-0 items-center gap-0.5 xl:gap-1">
 					<Link href="/survey">
 						<Button
 							variant={pathname === "/survey" ? "secondary" : "ghost"}
@@ -72,6 +72,16 @@ export function Header({ userEmail }: HeaderProps) {
 						>
 							<MessageCircle className="h-4 w-4" />
 							<span className="hidden sm:inline">AI Support</span>
+						</Button>
+					</Link>
+					<Link href="/find-care">
+						<Button
+							variant={pathname === "/find-care" ? "secondary" : "ghost"}
+							size="sm"
+							className="gap-2 text-teal-700 dark:text-teal-300"
+						>
+							<MapPin className="h-4 w-4" />
+							<span className="hidden lg:inline">Find a Dermatologist</span>
 						</Button>
 					</Link>
 					<DropdownMenu>

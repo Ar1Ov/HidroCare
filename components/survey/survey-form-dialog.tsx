@@ -296,7 +296,7 @@ export function SurveyFormDialog({ onSubmitted }: { onSubmitted?: () => void }) 
       }}
     >
       <DialogTrigger asChild>
-        <Button size="lg" className="gap-2 bg-teal-600 px-8 py-6 text-base hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
+        <Button size="lg" className="h-auto max-w-full gap-2 bg-teal-600 px-5 py-4 text-base hover:bg-teal-700 sm:px-8 sm:py-6 dark:bg-teal-500 dark:hover:bg-teal-600">
           Fill the survey
         </Button>
       </DialogTrigger>

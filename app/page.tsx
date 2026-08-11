@@ -2,13 +2,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { ArrowRight, BookOpen, Bot, ClipboardList, Droplets, NotebookPen } from "lucide-react";
+import { ArrowRight, BookOpen, Bot, ClipboardList, Droplets, MapPin, NotebookPen } from "lucide-react";
 
 export default function HomePage() {
 	return (
 		<div className="flex min-h-screen flex-col">
 			<header className="sticky top-0 z-50 border-b border-teal-200/40 bg-white/80 backdrop-blur-md dark:border-teal-800/30 dark:bg-slate-900/80">
-				<div className="container flex h-14 items-center justify-between">
+				<div className="flex h-14 w-full items-center justify-between px-2 sm:px-4">
 					<div className="flex items-center gap-2 font-bold text-teal-800 dark:text-teal-200">
 						<Image src="/hidrocare-logo.png" alt="" width={28} height={28} className="h-7 w-7 rounded-md object-contain" priority />
 						<span>HidroCare</span>
@@ -20,7 +20,7 @@ export default function HomePage() {
 					<nav className="flex items-center gap-1 sm:gap-2" aria-label="Main navigation">
 						<a
 							href="#about-hyperhidrosis"
-							className="inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-100 hover:text-teal-900 dark:text-teal-300 dark:hover:bg-teal-900/50 dark:hover:text-teal-100"
+							className="hidden items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-100 hover:text-teal-900 sm:inline-flex dark:text-teal-300 dark:hover:bg-teal-900/50 dark:hover:text-teal-100"
 						>
 							About
 						</a>
@@ -72,7 +72,7 @@ export default function HomePage() {
 
 						<div className="pt-2">
 							<Link href="/survey">
-								<Button size="lg" className="gap-2 bg-teal-600 px-8 py-6 text-base shadow-lg shadow-teal-900/20 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600">
+								<Button size="lg" className="h-auto max-w-full gap-2 bg-teal-600 px-5 py-4 text-base shadow-lg shadow-teal-900/20 hover:bg-teal-700 sm:px-8 sm:py-6 dark:bg-teal-500 dark:hover:bg-teal-600">
 									<ClipboardList className="h-5 w-5" />
 									Participate in our anonymous hyperhidrosis survey
 									<ArrowRight className="h-4 w-4" />
@@ -90,10 +90,11 @@ export default function HomePage() {
 							<h2 className="mt-2 text-3xl font-bold text-slate-900 dark:text-slate-100">Tools that help you understand your sweating</h2>
 							<p className="mt-3 text-slate-600 dark:text-slate-300">Create a free account to track patterns, learn from reliable resources, and get support in one private place.</p>
 						</div>
-						<div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-3">
+						<div className="mx-auto grid max-w-6xl gap-5 sm:grid-cols-2 lg:grid-cols-4">
 							{[
 								{ icon: NotebookPen, title: "Sweat log", description: "Record symptoms, triggers, severity, and notes to see patterns over time." },
 								{ icon: Bot, title: "AI support chatbot", description: "Ask questions and explore practical support tailored to hyperhidrosis." },
+								{ icon: MapPin, title: "Find a dermatologist", description: "Use a hyperhidrosis-focused clinician finder to search for care near you." },
 								{ icon: BookOpen, title: "Research & literature", description: "Browse helpful literature and current information about excessive sweating." },
 							].map(({ icon: Icon, title, description }) => (
 								<div key={title} className="rounded-2xl border border-teal-200/70 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md dark:border-teal-800/50 dark:bg-slate-900">
