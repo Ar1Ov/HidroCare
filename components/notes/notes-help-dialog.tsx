@@ -13,11 +13,13 @@ import {
 
 const HELP_CONTENT = {
   creating:
-    "Click the Create note button to start a new log entry. Fill in the date, rate your sweat severity for each area (palms, feet, underarms, face, other), answer the trigger and emotional impact questions, then add any extra notes.",
+    "Click the Create note button to start a new log entry. Rate palms, feet, underarms, and face, or add up to five custom areas such as your scalp, neck, back, chest, or groin. Each custom area receives its own color and 0–10 severity score, and appears in your saved log and progress chart.",
   deleting:
     "When editing a log, use the delete button in the top right corner to permanently remove it. You’ll be asked to confirm before it’s deleted.",
   autoSave:
     "Your log is saved automatically as you type. No need to click save — just fill in the form and your changes are stored after a short pause.",
+  customAreas:
+    "You can keep up to five custom body parts active at once. Each keeps the same color and appears automatically in future logs. Removing one permanently removes that body part and all of its recorded history from every log and chart.",
 };
 
 export function NotesHelpDialog() {
@@ -51,6 +53,10 @@ export function NotesHelpDialog() {
           <div>
             <h4 className="mb-1 font-medium text-foreground">Auto-save</h4>
             <p>{HELP_CONTENT.autoSave}</p>
+          </div>
+          <div>
+            <h4 className="mb-1 font-medium text-foreground">Custom body parts and history</h4>
+            <p>{HELP_CONTENT.customAreas}</p>
           </div>
         </div>
       </DialogContent>

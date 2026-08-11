@@ -13,7 +13,14 @@ const AREAS = [
   { id: "feet", label: "Feet", emoji: "🦶" },
   { id: "underarms", label: "Underarms", emoji: "💪" },
   { id: "face", label: "Face", emoji: "😊" },
-  { id: "other", label: "Other", emoji: "📝" },
+];
+
+const CUSTOM_AREA_BADGES = [
+  "bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-200",
+  "bg-violet-50 text-violet-800 dark:bg-violet-950/60 dark:text-violet-200",
+  "bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-200",
+  "bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200",
+  "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200",
 ];
 
 export function NoteCard({ note }: NoteCardProps) {
@@ -44,7 +51,8 @@ export function NoteCard({ note }: NoteCardProps) {
         year: "numeric",
       });
 
-  const areas = content?.areas || [];
+  const areas = (content?.areas || []).filter((area: any) => area?.area !== "other");
+  const customAreas = areas.filter((area: any) => typeof area?.area === "string" && area.area.startsWith("custom:"));
   const stress = content?.stress || {};
 
   // Calculate average severity
@@ -126,6 +134,15 @@ export function NoteCard({ note }: NoteCardProps) {
                 );
               })}
             </div>
+            {customAreas.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {customAreas.slice(0, 5).map((area: any, index: number) => (
+                  <span key={area.area} className={`rounded-full px-2 py-1 text-xs font-medium ${CUSTOM_AREA_BADGES[typeof area.colorIndex === "number" ? area.colorIndex : index]}`}>
+                    {area.label || area.area.replace(/^custom:/, "")}: {area.severity || 0}/10
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Triggers */}

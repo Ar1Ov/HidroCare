@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import { SaveStatusIndicator } from "./save-status-indicator";
 import { DeleteNoteButton } from "./delete-note-button";
 import { NotesHelpDialog } from "./notes-help-dialog";
 import type { Tables } from "@/types/supabase";
+import { Plus, X } from "lucide-react";
 
 interface NoteFormProps {
   note?: Tables<"notes">;
@@ -20,6 +21,8 @@ interface NoteFormProps {
 
 type AreaEntry = {
 	area: string;
+	label?: string;
+	colorIndex?: number;
 	severity: number;
 	triggers: string[]; // ✅ important
 	duration: string;
@@ -37,8 +40,27 @@ const AREAS = [
   { id: "feet", label: "Feet", emoji: "🦶" },
   { id: "underarms", label: "Underarms", emoji: "💪" },
   { id: "face", label: "Face", emoji: "😊" },
-  { id: "other", label: "Other", emoji: "📝" },
 ];
+
+const CUSTOM_AREA_STYLES = [
+  "border-blue-300 bg-blue-50/60 dark:border-blue-800 dark:bg-blue-950/30",
+  "border-violet-300 bg-violet-50/60 dark:border-violet-800 dark:bg-violet-950/30",
+  "border-rose-300 bg-rose-50/60 dark:border-rose-800 dark:bg-rose-950/30",
+  "border-amber-300 bg-amber-50/60 dark:border-amber-800 dark:bg-amber-950/30",
+  "border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/30",
+];
+
+function limitCustomAreas(entries: AreaEntry[]) {
+  let customCount = 0;
+  return entries.reduce<AreaEntry[]>((result, entry) => {
+    if (entry.area === "other") return result;
+    if (!entry.area.startsWith("custom:")) return [...result, entry];
+    if (customCount >= 5) return result;
+    const colorIndex = typeof entry.colorIndex === "number" ? entry.colorIndex : customCount;
+    customCount += 1;
+    return [...result, { ...entry, colorIndex }];
+  }, []);
+}
 
 const TRIGGERS = [
   "Stress",
@@ -59,7 +81,7 @@ function toLocalDateString(d: Date): string {
 
 export function NoteForm({ note, mode }: NoteFormProps) {
   const router = useRouter();
-  const supabase = createClient();
+  const [supabase] = useState(() => createClient());
 
   // Parse existing content or use defaults
   let existingContent: Record<string, unknown> = {};
@@ -86,7 +108,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
 
   const [areaData, setAreaData] = useState<AreaEntry[]>(
 	Array.isArray(existingContent?.areas)
-	  ? (existingContent.areas as AreaEntry[])
+	  ? limitCustomAreas(existingContent.areas as AreaEntry[])
 	  : AREAS.map((area) => ({
 		  area: area.id,
 		  severity: 0,
@@ -94,6 +116,47 @@ export function NoteForm({ note, mode }: NoteFormProps) {
 		  duration: "",
 		}))
   );
+  const [customAreaName, setCustomAreaName] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    async function loadSavedAreas() {
+      const { data } = await (supabase as any)
+        .from("user_custom_areas")
+        .select("area_key, label, color_index")
+        .order("color_index");
+      if (!active || !Array.isArray(data)) return;
+      setAreaData((current) => {
+        const additions = data
+          .filter((saved: any) => !current.some((entry) => entry.area === saved.area_key))
+          .map((saved: any) => ({ area: saved.area_key, label: saved.label, colorIndex: saved.color_index, severity: 0, triggers: [], duration: "" }));
+        return limitCustomAreas([...current, ...additions]);
+      });
+    }
+    void loadSavedAreas();
+    return () => { active = false; };
+  }, [mode, supabase]);
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+    const existingCustomAreas = areaData.filter((entry) => entry.area.startsWith("custom:")).slice(0, 5);
+    if (existingCustomAreas.length === 0) return;
+    async function rememberExistingAreas() {
+      const { data: authData } = await supabase.auth.getUser();
+      if (!authData.user) return;
+      for (const [index, entry] of existingCustomAreas.entries()) {
+        await (supabase as any).from("user_custom_areas").upsert({
+          user_id: authData.user.id,
+          area_key: entry.area,
+          label: entry.label || entry.area.slice("custom:".length),
+          color_index: entry.colorIndex ?? index,
+        }, { onConflict: "user_id,area_key" });
+      }
+    }
+    void rememberExistingAreas();
+    // Existing note areas are intentionally registered once when the editor opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, note?.id, supabase]);
 
   const [stressData, setStressData] = useState(
     (existingContent?.stress as Record<string, number>) || {
@@ -151,6 +214,33 @@ export function NoteForm({ note, mode }: NoteFormProps) {
     const newData = [...areaData];
     newData[index] = { ...newData[index], [field]: value };
     setAreaData(newData);
+  };
+
+  const customAreas = areaData.filter((entry) => entry.area.startsWith("custom:"));
+
+  const addCustomArea = async () => {
+    const label = customAreaName.trim().replace(/\s+/g, " ");
+    if (!label || customAreas.length >= 5) return;
+    const key = `custom:${label.toLowerCase()}`;
+    if (areaData.some((entry) => entry.area.toLowerCase() === key)) return;
+    const usedColors = new Set(customAreas.map((entry, index) => entry.colorIndex ?? index));
+    const colorIndex = [0, 1, 2, 3, 4].find((slot) => !usedColors.has(slot)) ?? customAreas.length;
+    setAreaData([...areaData, { area: key, label, colorIndex, severity: 0, triggers: [], duration: "" }]);
+    setCustomAreaName("");
+    const { data: authData } = await supabase.auth.getUser();
+    if (authData.user) {
+      await (supabase as any).from("user_custom_areas").upsert({ user_id: authData.user.id, area_key: key, label, color_index: colorIndex }, { onConflict: "user_id,area_key" });
+    }
+  };
+
+  const removeCustomArea = async (area: string) => {
+    const entry = areaData.find((item) => item.area === area);
+    const label = entry?.label || area.slice("custom:".length);
+    const confirmed = window.confirm(`Remove ${label}? This permanently removes this body part and all of its recorded history from every sweat log. This cannot be undone.`);
+    if (!confirmed) return;
+    const response = await fetch(`/api/auth/custom-areas/${encodeURIComponent(area)}`, { method: "DELETE" });
+    if (!response.ok) return;
+    setAreaData((current) => current.filter((item) => item.area !== area));
   };
 
   return (
@@ -248,6 +338,41 @@ export function NoteForm({ note, mode }: NoteFormProps) {
                   </div>
                 </div>
               ))}
+
+              {customAreas.length > 0 && (
+                <div className="space-y-3 border-t pt-4">
+                  <div>
+                    <p className="text-sm font-semibold">Your tracked body parts</p>
+                    <p className="mt-1 text-xs text-muted-foreground">Each body part keeps the same color in future logs. Removing one permanently deletes its history from all logs and charts.</p>
+                  </div>
+                  {customAreas.map((entry, customIndex) => {
+                    const index = areaData.findIndex((item) => item.area === entry.area);
+                    return (
+                      <div key={entry.area} className={`flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${CUSTOM_AREA_STYLES[entry.colorIndex ?? customIndex]}`}>
+                        <div className="flex min-w-0 items-center gap-2 font-medium">
+                          <span aria-hidden>📍</span>
+                          <span className="truncate">{entry.label || entry.area.replace(/^custom:/, "")}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">Severity:</span>
+                          <Input type="number" min="0" max="10" value={entry.severity} onChange={(event) => updateAreaData(index, "severity", Math.min(10, Math.max(0, parseInt(event.target.value) || 0)))} onBlur={triggerSave} className="w-16" />
+                          <span className="text-sm font-bold">/10</span>
+                          <Button type="button" size="icon-sm" variant="ghost" onClick={() => void removeCustomArea(entry.area)} aria-label={`Remove ${entry.label || "custom area"} and its history`} title="Remove this body part and all of its history" className="text-muted-foreground hover:text-red-600"><X className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="rounded-lg bg-muted/40 p-3">
+                <p className="text-sm font-medium">Track another body part</p>
+                <p className="mt-1 text-xs text-muted-foreground">For example: scalp, neck, back, chest, or groin. Up to 5 custom areas per log, each with its own color.</p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <Input value={customAreaName} onChange={(event) => setCustomAreaName(event.target.value.slice(0, 40))} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addCustomArea(); } }} placeholder="Body area name" className="sm:max-w-xs" />
+                  <Button type="button" variant="outline" onClick={() => void addCustomArea()} disabled={!customAreaName.trim() || customAreas.length >= 5} className="gap-2"><Plus className="h-4 w-4" /> Track body part</Button>
+                </div>
+              </div>
             </div>
           </div>
 

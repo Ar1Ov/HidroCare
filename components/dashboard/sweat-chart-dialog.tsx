@@ -27,8 +27,12 @@ type ChartPoint = {
   feet: number;
   underarms: number;
   face: number;
-  other: number;
+  [key: string]: string | number;
 };
+
+type CustomArea = { key: string; label: string; colorIndex?: number };
+
+const CUSTOM_COLORS = ["#2563EB", "#7C3AED", "#E11D48", "#D97706", "#059669"];
 
 type RangeKey = "24h" | "7d" | "30d" | "90d" | "180d" | "365d" | "all";
 
@@ -56,6 +60,7 @@ export function SweatChartDialog() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [points, setPoints] = useState<ChartPoint[]>([]);
+  const [customAreas, setCustomAreas] = useState<CustomArea[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [range, setRange] = useState<RangeKey>("30d");
 
@@ -75,7 +80,10 @@ export function SweatChartDialog() {
 
         if (!res.ok) throw new Error(json?.error || "Failed to load stats");
 
-        if (!cancelled) setPoints(Array.isArray(json.points) ? json.points : []);
+        if (!cancelled) {
+          setPoints(Array.isArray(json.points) ? json.points : []);
+          setCustomAreas(Array.isArray(json.customAreas) ? json.customAreas : []);
+        }
       } catch (e: any) {
         if (!cancelled) setErr(e?.message || "Failed to load stats");
       } finally {
@@ -99,7 +107,7 @@ export function SweatChartDialog() {
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Sweat Severity Over Time</DialogTitle>
           <div className="flex flex-wrap gap-1.5 pt-2">
@@ -132,7 +140,10 @@ export function SweatChartDialog() {
         )}
 
         {!loading && !err && chartData.length > 0 && (
-          <div className="h-[420px] w-full">
+          <div className="space-y-8">
+            <section>
+              <h3 className="mb-2 text-sm font-semibold">Standard body areas</h3>
+              <div className="h-[360px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -177,16 +188,31 @@ export function SweatChartDialog() {
   strokeWidth={3}
 />
 
-<Line
-  type="monotone"
-  dataKey="other"
-  name="Other"
-  dot={false}
-  stroke="#6B7280"
-  strokeWidth={3}
-/>
               </LineChart>
             </ResponsiveContainer>
+              </div>
+            </section>
+
+            {customAreas.length > 0 && (
+              <section className="border-t pt-6">
+                <h3 className="text-base font-semibold">Your custom body areas</h3>
+                <p className="mb-3 mt-1 text-xs text-muted-foreground">Tracks the exact body parts you chose in your sweat logs.</p>
+                <div className="h-[300px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tickFormatter={(v) => formatDateLabel(v, is24h)} />
+                      <YAxis domain={[0, 10]} />
+                      <Tooltip labelFormatter={(v) => (is24h ? `Time: ${v}` : `Date: ${v}`)} />
+                      <Legend />
+                      {customAreas.slice(0, 5).map((area, index) => (
+                        <Line key={area.key} type="monotone" dataKey={area.key} name={area.label} dot={{ r: 4, strokeWidth: 2, fill: "var(--background)" }} activeDot={{ r: 6 }} connectNulls stroke={CUSTOM_COLORS[(area.colorIndex ?? index) % CUSTOM_COLORS.length]} strokeWidth={3} />
+                      ))}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+            )}
           </div>
         )}
       </DialogContent>

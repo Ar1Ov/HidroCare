@@ -1,15 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-type AreaId = "palms" | "feet" | "underarms" | "face" | "other";
-
 type ChartPoint = {
   date: string; // YYYY-MM-DD or "YYYY-MM-DD HH:mm" for 24h
   palms: number;
   feet: number;
   underarms: number;
   face: number;
-  other: number;
+  [key: string]: string | number;
 };
 
 const RANGE_MS: Record<string, number> = {
@@ -27,7 +25,7 @@ function safeNumber(x: unknown): number {
 }
 
 function emptyPoint(date: string): ChartPoint {
-  return { date, palms: 0, feet: 0, underarms: 0, face: 0, other: 0 };
+  return { date, palms: 0, feet: 0, underarms: 0, face: 0 };
 }
 
 /** Parse note date+time or created_at into a timestamp for filtering */
@@ -77,6 +75,8 @@ export async function GET(request: Request) {
   }
 
   const points: ChartPoint[] = [];
+  const customAreaLabels = new Map<string, string>();
+  const customAreaColors = new Map<string, number>();
   const useTime = range === "24h";
 
   for (const n of notes ?? []) {
@@ -99,14 +99,26 @@ export async function GET(request: Request) {
 
     const areas = Array.isArray(parsed?.areas) ? parsed.areas : [];
     for (const a of areas) {
-      const area = (a as { area?: string })?.area as AreaId | undefined;
+      const area = (a as { area?: string })?.area;
       const severity = safeNumber((a as { severity?: unknown })?.severity);
 
       if (area === "palms") p.palms = severity;
       if (area === "feet") p.feet = severity;
       if (area === "underarms") p.underarms = severity;
       if (area === "face") p.face = severity;
-      if (area === "other") p.other = severity;
+      if (typeof area === "string" && area.startsWith("custom:")) {
+        const rawLabel = (a as { label?: unknown }).label;
+        const label = typeof rawLabel === "string" && rawLabel.trim()
+          ? rawLabel.trim()
+          : area.slice("custom:".length);
+        const key = `custom_${area.slice("custom:".length).replace(/[^a-z0-9]+/gi, "_").replace(/^_|_$/g, "").toLowerCase()}`;
+        if (key !== "custom_") {
+          p[key] = severity;
+          customAreaLabels.set(key, label);
+          const rawColor = (a as { colorIndex?: unknown }).colorIndex;
+          if (typeof rawColor === "number" && rawColor >= 0 && rawColor <= 4) customAreaColors.set(key, rawColor);
+        }
+      }
     }
 
     const idx = points.findIndex((x) => x.date === p.date);
@@ -116,5 +128,8 @@ export async function GET(request: Request) {
 
   points.sort((a, b) => a.date.localeCompare(b.date));
 
-  return NextResponse.json({ points });
+  return NextResponse.json({
+    points,
+    customAreas: Array.from(customAreaLabels, ([key, label], index) => ({ key, label, colorIndex: customAreaColors.get(key) ?? index % 5 })),
+  });
 }
