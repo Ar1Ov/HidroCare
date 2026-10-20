@@ -85,13 +85,13 @@ export function NoteCard({ note }: NoteCardProps) {
 
   return (
     <Link href={`/notes/${note.id}`}>
-      <Card className="h-full rounded-[3px] border-border bg-card shadow-none backdrop-blur-none dark:border-border dark:shadow-none transition-colors cursor-pointer hover:border-teal-600/50">
-        <CardHeader className="pb-2">
+      <Card className="h-full rounded-lg border-slate-200 bg-white shadow-none backdrop-blur-none dark:border-slate-700 dark:bg-slate-800 dark:shadow-none transition-colors cursor-pointer hover:border-teal-500 dark:hover:border-teal-400">
+        <CardHeader className="border-b border-slate-100 pb-4 dark:border-slate-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CardTitle className="text-lg">{logDate}</CardTitle>
             </div>
-            <div className="rounded-[3px] border px-2 py-1 text-xs font-medium text-muted-foreground">
+            <div className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-200">
               Average <span className="tabular-nums">{avgSeverity}/10</span>
             </div>
           </div>
@@ -129,7 +129,7 @@ export function NoteCard({ note }: NoteCardProps) {
                       aria-valuemin={0}
                       aria-valuemax={10}
                       aria-valuenow={Math.min(10, Math.max(0, severity))}
-                      className="h-2 overflow-hidden bg-muted"
+                      className="h-2 overflow-hidden bg-slate-100 dark:bg-slate-700"
                     >
                       <div
                         className="h-full"
