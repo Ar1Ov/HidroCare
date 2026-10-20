@@ -9,18 +9,18 @@ interface NoteCardProps {
 }
 
 const AREAS = [
-  { id: "palms", label: "Hands" },
-  { id: "feet", label: "Feet" },
-  { id: "underarms", label: "Underarms" },
-  { id: "face", label: "Face" },
+  { id: "palms", label: "Hands", color: "#059669" },
+  { id: "feet", label: "Feet", color: "#4F46E5" },
+  { id: "underarms", label: "Underarms", color: "#E11D48" },
+  { id: "face", label: "Face", color: "#D97706" },
 ];
 
-const CUSTOM_AREA_BARS = [
-  "bg-blue-600",
-  "bg-violet-600",
-  "bg-rose-600",
-  "bg-amber-600",
-  "bg-emerald-600",
+const CUSTOM_AREA_COLORS = [
+  "#2563EB",
+  "#7C3AED",
+  "#E11D48",
+  "#D97706",
+  "#059669",
 ];
 
 export function NoteCard({ note }: NoteCardProps) {
@@ -75,14 +75,6 @@ export function NoteCard({ note }: NoteCardProps) {
     (stress.confidenceImpact || 0)) / 4
   );
 
-  // Get severity background class
-  const getSeverityBgClass = (severity: number): string => {
-    if (severity >= 8) return "bg-red-500";
-    if (severity >= 5) return "bg-yellow-500";
-    if (severity > 0) return "bg-green-500";
-    return "bg-slate-300";
-  };
-
   // Get severity text color class
   const getSeverityTextClass = (severity: number): string => {
     if (severity >= 8) return "text-red-600 dark:text-red-400";
@@ -100,7 +92,7 @@ export function NoteCard({ note }: NoteCardProps) {
               <CardTitle className="text-lg">{logDate}</CardTitle>
             </div>
             <div className="rounded-[3px] border px-2 py-1 text-xs font-medium text-muted-foreground">
-              Average {avgSeverity}/10
+              Average <span className="tabular-nums">{avgSeverity}/10</span>
             </div>
           </div>
           {content?.timeOfDay && (
@@ -114,21 +106,19 @@ export function NoteCard({ note }: NoteCardProps) {
               Sweat Severity
             </p>
             <div className="space-y-3">
-              {[...AREAS, ...customAreas.slice(0, 5).map((area: any) => ({
+              {[...AREAS, ...customAreas.slice(0, 5).map((area: any, index: number) => ({
                 id: area.area,
                 label: area.label || area.area.replace(/^custom:/, ""),
-              }))].map((area, index) => {
+                color: CUSTOM_AREA_COLORS[(area.colorIndex ?? index) % CUSTOM_AREA_COLORS.length],
+              }))].map((area) => {
                 const areaData = areas.find((a: any) => a.area === area.id) || {};
                 const severity = areaData.severity || 0;
                 const percentage = Math.min(10, Math.max(0, severity)) * 10;
-                const barColor = area.id.startsWith("custom:")
-                  ? CUSTOM_AREA_BARS[areaData.colorIndex ?? index - AREAS.length]
-                  : getSeverityBgClass(severity);
                 
                 return (
                   <div key={area.id} className="space-y-1.5">
                     <div className="flex items-center justify-between gap-3 text-xs">
-                      <span className="font-medium">{area.label}</span>
+                      <span className="font-medium text-foreground dark:text-white">{area.label}</span>
                       <span className={`tabular-nums ${getSeverityTextClass(severity)}`}>
                         {severity}/10
                       </span>
@@ -142,8 +132,8 @@ export function NoteCard({ note }: NoteCardProps) {
                       className="h-2 overflow-hidden bg-muted"
                     >
                       <div
-                        className={`h-full ${barColor}`}
-                        style={{ width: `${percentage}%` }}
+                        className="h-full"
+                        style={{ width: `${percentage}%`, backgroundColor: area.color }}
                       />
                     </div>
                   </div>
