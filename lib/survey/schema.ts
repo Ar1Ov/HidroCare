@@ -137,6 +137,8 @@ export type SurveyStats = {
   treatments: Record<string, number>;
   lifeAreas: Record<string, number>;
   futureResearch: Record<string, number>;
+  odorLevel: Record<string, number>;
+  odorOnset: Record<string, number>;
 };
 
 export function emptySurveyStats(): SurveyStats {
@@ -153,6 +155,8 @@ export function emptySurveyStats(): SurveyStats {
     treatments: {},
     lifeAreas: {},
     futureResearch: {},
+    odorLevel: {},
+    odorOnset: {},
   };
 }
 

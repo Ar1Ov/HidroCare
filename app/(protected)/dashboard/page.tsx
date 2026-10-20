@@ -16,10 +16,10 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: true });
 
   return (
-    <div className="container mx-auto space-y-8 py-8">
+    <div className="container mx-auto space-y-8 py-8 [&_button]:rounded-[3px]">
       {/* Welcome Message */}
-      <div className="rounded-xl bg-teal-700 p-6 text-white dark:bg-teal-800">
-        <h1 className="text-2xl font-bold">Welcome back, {userName}! 👋</h1>
+      <div className="rounded-[3px] bg-teal-700 p-6 text-white dark:bg-teal-800">
+        <h1 className="text-2xl font-bold">Welcome back, {userName}</h1>
         <p className="mt-2 opacity-90">
           Track your hyperhidrosis symptoms and monitor your progress over time.
         </p>

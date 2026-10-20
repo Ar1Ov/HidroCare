@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { BarChart3, ClipboardList, EyeOff, HeartHandshake, Loader2, RefreshCw } from "lucide-react";
+import { ClipboardList, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { SurveyCharts } from "@/components/survey/survey-charts";
 import { Button } from "@/components/ui/button";
@@ -85,35 +85,18 @@ export function SurveyPageContent({ isAuthenticated = false }: { isAuthenticated
           </div>
           <div className="space-y-3">
             <h1 className="text-3xl font-bold tracking-tight text-teal-950 dark:text-teal-50 sm:text-4xl">
-              Participate in our research survey
+              Participate in our anonymous research survey
             </h1>
             <p className="text-base text-muted-foreground sm:text-lg">
-              Share an anonymous response to help map patterns in excessive sweating — then explore
-              live charts that update as more people participate.
+              Share your experience with excessive sweating and view the survey results below.
             </p>
-          </div>
-          <div className="grid w-full gap-3 text-left sm:grid-cols-3">
-            {[
-              { icon: EyeOff, title: "Anonymous", text: "No name or email is collected." },
-              { icon: HeartHandshake, title: "Your choice", text: "Every question can be skipped." },
-              { icon: BarChart3, title: "See the impact", text: "View live, aggregated results." },
-            ].map(({ icon: Icon, title, text }) => (
-              <div
-                key={title}
-                className="rounded-xl border border-teal-200/70 bg-white/80 p-4 shadow-sm dark:border-teal-800/50 dark:bg-slate-900/80"
-              >
-                <Icon className="mb-2 h-5 w-5 text-teal-600 dark:text-teal-400" />
-                <p className="font-semibold text-teal-950 dark:text-teal-50">{title}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{text}</p>
-              </div>
-            ))}
           </div>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <SurveyFormDialog onSubmitted={() => loadStats("manual")} />
             <Button
               type="button"
               variant="outline"
-              className="gap-2"
+              className="h-9 gap-2 px-4 text-sm"
               disabled={loading || refreshing}
               onClick={() => loadStats("manual")}
             >

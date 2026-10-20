@@ -14,7 +14,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import type { SurveyStats } from "@/lib/survey/schema";
+import { ODOR_LEVELS, ODOR_ONSETS, type SurveyStats } from "@/lib/survey/schema";
 
 const PIE_COLORS = ["#ef4444", "#f59e0b", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899"];
 const tooltipStyle = {
@@ -42,46 +42,54 @@ function ChartCard({
   answered,
   data,
   color = "#0d9488",
+  horizontal = false,
+  available = true,
 }: {
   title: string;
   description: string;
   answered: number;
   data: { name: string; value: number }[];
   color?: string;
+  horizontal?: boolean;
+  available?: boolean;
 }) {
   return (
     <Card className="border-teal-200/60 bg-white/85 shadow-md dark:border-teal-800/40 dark:bg-slate-900/85">
       <CardHeader className="pb-2">
         <CardTitle className="text-base text-teal-950 dark:text-teal-50">{title}</CardTitle>
         <CardDescription className="font-medium text-slate-700 dark:text-slate-300">
-          {description} · Based on {answered} response{answered === 1 ? "" : "s"}
+          {description}{available ? ` · Based on ${answered} response${answered === 1 ? "" : "s"}` : ""}
         </CardDescription>
       </CardHeader>
       <CardContent className="h-72 pt-0">
         {data.length === 0 ? (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            No responses yet
+            {available ? "No responses yet" : "Results are not available yet"}
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 48 }}>
+            <BarChart data={data} layout={horizontal ? "vertical" : "horizontal"} margin={{ top: 8, right: 16, left: 0, bottom: horizontal ? 8 : 48 }}>
               <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" opacity={0.7} />
               <XAxis
-                dataKey="name"
-                tick={{ fill: "var(--foreground)", fontSize: 12, fontWeight: 600 }}
-                axisLine={{ stroke: "var(--muted-foreground)" }}
-                tickLine={{ stroke: "var(--muted-foreground)" }}
-                interval={0}
-                angle={-28}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis
+                type={horizontal ? "number" : "category"}
+                dataKey={horizontal ? undefined : "name"}
                 allowDecimals={false}
                 tick={{ fill: "var(--foreground)", fontSize: 12, fontWeight: 600 }}
                 axisLine={{ stroke: "var(--muted-foreground)" }}
                 tickLine={{ stroke: "var(--muted-foreground)" }}
-                width={38}
+                interval={0}
+                angle={horizontal ? 0 : -28}
+                textAnchor={horizontal ? "middle" : "end"}
+                height={horizontal ? 30 : 60}
+              />
+              <YAxis
+                type={horizontal ? "category" : "number"}
+                dataKey={horizontal ? "name" : undefined}
+                allowDecimals={false}
+                tick={{ fill: "var(--foreground)", fontSize: 12, fontWeight: 600 }}
+                axisLine={{ stroke: "var(--muted-foreground)" }}
+                tickLine={{ stroke: "var(--muted-foreground)" }}
+                width={horizontal ? 155 : 38}
               />
               <Tooltip
                 contentStyle={tooltipStyle}
@@ -239,6 +247,24 @@ export function SurveyCharts({ stats }: { stats: SurveyStats }) {
           answered={answered.triggers ?? 0}
           data={triggers}
           color="#0f766e"
+        />
+        <ChartCard
+          title="How would you describe any odor?"
+          description="Reported odor intensity"
+          answered={answered.odorLevel ?? 0}
+          available={answered.odorLevel !== undefined}
+          data={answered.odorLevel ? ODOR_LEVELS.map((name) => ({ name, value: stats.odorLevel?.[name] ?? 0 })) : []}
+          horizontal
+          color="#0f766e"
+        />
+        <ChartCard
+          title="How soon after sweating begins do you notice odor?"
+          description="Time until odor is noticed"
+          answered={answered.odorOnset ?? 0}
+          available={answered.odorOnset !== undefined}
+          data={answered.odorOnset ? ODOR_ONSETS.map((name) => ({ name, value: stats.odorOnset?.[name] ?? 0 })) : []}
+          horizontal
+          color="#155e75"
         />
       </div>
 

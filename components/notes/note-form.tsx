@@ -36,10 +36,10 @@ type AreaEntry = {
   };
 
 const AREAS = [
-  { id: "palms", label: "Palms", emoji: "🖐️" },
-  { id: "feet", label: "Feet", emoji: "🦶" },
-  { id: "underarms", label: "Underarms", emoji: "💪" },
-  { id: "face", label: "Face", emoji: "😊" },
+  { id: "palms", label: "Hands" },
+  { id: "feet", label: "Feet" },
+  { id: "underarms", label: "Underarms" },
+  { id: "face", label: "Face" },
 ];
 
 const CUSTOM_AREA_STYLES = [
@@ -244,7 +244,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
   };
 
   return (
-    <Card>
+    <Card className="rounded-[3px] border-border bg-card shadow-none backdrop-blur-none dark:border-border dark:shadow-none [&_input]:rounded-[3px] [&_button]:rounded-[3px] [&_textarea]:rounded-[3px]">
       <CardHeader>
         <div className="flex items-center justify-between">
           <NotesHelpDialog />
@@ -273,7 +273,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
               <label htmlFor="date" className="text-sm font-medium">
-                📅 Date:
+                Date:
               </label>
               <Input
                 id="date"
@@ -286,7 +286,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
             </div>
             <div className="flex items-center gap-2">
               <label htmlFor="time" className="text-sm font-medium">
-                🕐 Time:
+                Time:
               </label>
               <Input
                 id="time"
@@ -299,17 +299,17 @@ export function NoteForm({ note, mode }: NoteFormProps) {
             </div>
           </div>
 
-          {/* 1️⃣ Daily Sweat Log */}
-          <div className="rounded-lg border p-4">
-            <h3 className="mb-4 text-lg font-semibold">1️⃣ Daily Sweat Log</h3>
+          {/* Daily Sweat Log */}
+          <div className="rounded-[3px] border p-4">
+            <h3 className="mb-4 text-lg font-semibold">Daily Sweat Log</h3>
             <div className="space-y-4">
               {AREAS.map((area, index) => (
                 <div
                   key={area.id}
-                  className="flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between"
+                  className="flex flex-col gap-3 rounded-[3px] border p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="font-medium">
-                    {area.emoji} {area.label}
+                    {area.label}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">Severity:</span>
@@ -348,9 +348,8 @@ export function NoteForm({ note, mode }: NoteFormProps) {
                   {customAreas.map((entry, customIndex) => {
                     const index = areaData.findIndex((item) => item.area === entry.area);
                     return (
-                      <div key={entry.area} className={`flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between ${CUSTOM_AREA_STYLES[entry.colorIndex ?? customIndex]}`}>
+                      <div key={entry.area} className={`flex flex-col gap-3 rounded-[3px] border p-3 sm:flex-row sm:items-center sm:justify-between ${CUSTOM_AREA_STYLES[entry.colorIndex ?? customIndex]}`}>
                         <div className="flex min-w-0 items-center gap-2 font-medium">
-                          <span aria-hidden>📍</span>
                           <span className="truncate">{entry.label || entry.area.replace(/^custom:/, "")}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -365,7 +364,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
                 </div>
               )}
 
-              <div className="rounded-lg bg-muted/40 p-3">
+              <div className="rounded-[3px] bg-muted/40 p-3">
                 <p className="text-sm font-medium">Track another body part</p>
                 <p className="mt-1 text-xs text-muted-foreground">For example: scalp, neck, back, chest, or groin. Up to 5 custom areas per log, each with its own color.</p>
                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -376,10 +375,10 @@ export function NoteForm({ note, mode }: NoteFormProps) {
             </div>
           </div>
 
-          {/* 2️⃣ Stress & Emotional Impact */}
-          <div className="rounded-lg border p-4">
+          {/* Stress & Emotional Impact */}
+          <div className="rounded-[3px] border p-4">
             <h3 className="mb-4 text-lg font-semibold">
-              2️⃣ Stress & Emotional Impact
+              Stress & Emotional Impact
             </h3>
             <div className="space-y-3">
               {[
@@ -402,7 +401,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
                           setStressData({ ...stressData, [item.key]: num })
                         }
                         onBlur={triggerSave}
-                        className={`h-8 w-8 rounded-full border-2 text-sm ${
+                        className={`h-8 w-8 rounded-[3px] border-2 text-sm ${
                           stressData[item.key as keyof typeof stressData] === num
                             ? "border-primary bg-primary text-primary-foreground"
                             : "border-slate-300 hover:border-primary"
@@ -417,14 +416,14 @@ export function NoteForm({ note, mode }: NoteFormProps) {
             </div>
           </div>
 
-          {/* 3️⃣ Trigger Questionnaire */}
-          <div className="rounded-lg border p-4">
-            <h3 className="mb-4 text-lg font-semibold">3️⃣ Trigger Questionnaire</h3>
+          {/* Trigger Questionnaire */}
+          <div className="rounded-[3px] border p-4">
+            <h3 className="mb-4 text-lg font-semibold">Trigger Questionnaire</h3>
             <div className="flex flex-wrap gap-3">
               {TRIGGERS.map((trigger) => (
                 <label
                   key={trigger}
-                  className="flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                  className="flex cursor-pointer items-center gap-2 rounded-[3px] border px-3 py-1.5 text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
                 >
                   <input
                     type="checkbox"
@@ -444,9 +443,9 @@ export function NoteForm({ note, mode }: NoteFormProps) {
             </div>
           </div>
 
-          {/* 4️⃣ Frequency & Patterns */}
-          <div className="rounded-lg border p-4">
-            <h3 className="mb-4 text-lg font-semibold">4️⃣ Frequency & Patterns</h3>
+          {/* Frequency & Patterns */}
+          <div className="rounded-[3px] border p-4">
+            <h3 className="mb-4 text-lg font-semibold">Frequency & Patterns</h3>
             <div className="space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                 <span className="text-sm sm:w-48">
@@ -469,7 +468,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
                       key={time}
                       type="button"
                       onClick={() => setEpisodeTiming(time)}
-                      className={`rounded-lg border px-3 py-1 text-sm ${
+                      className={`rounded-[3px] border px-3 py-1 text-sm ${
                         episodeTiming === time
                           ? "border-primary bg-primary text-primary-foreground"
                           : "hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -488,7 +487,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
                       key={type}
                       type="button"
                       onClick={() => setEpisodeType(type)}
-                      className={`rounded-lg border px-3 py-1 text-sm ${
+                      className={`rounded-[3px] border px-3 py-1 text-sm ${
                         episodeType === type
                           ? "border-primary bg-primary text-primary-foreground"
                           : "hover:bg-slate-50 dark:hover:bg-slate-800"
@@ -502,9 +501,9 @@ export function NoteForm({ note, mode }: NoteFormProps) {
             </div>
           </div>
 
-          {/* 5️⃣ Additional Notes */}
-          <div className="rounded-lg border p-4">
-            <h3 className="mb-4 text-lg font-semibold">5️⃣ Additional Notes</h3>
+          {/* Additional Notes */}
+          <div className="rounded-[3px] border p-4">
+            <h3 className="mb-4 text-lg font-semibold">Additional Notes</h3>
             <Textarea
               placeholder="Any other observations..."
               rows={4}
@@ -516,7 +515,7 @@ export function NoteForm({ note, mode }: NoteFormProps) {
 
           {/* Auto-save indicator */}
           <p className="text-xs text-muted-foreground">
-            💾 Your log is automatically saved as you type
+            Your log is automatically saved as you type
           </p>
 
           {/* Submit / Back to Dashboard */}

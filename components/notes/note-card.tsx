@@ -9,18 +9,18 @@ interface NoteCardProps {
 }
 
 const AREAS = [
-  { id: "palms", label: "Palms", emoji: "🖐️" },
-  { id: "feet", label: "Feet", emoji: "🦶" },
-  { id: "underarms", label: "Underarms", emoji: "💪" },
-  { id: "face", label: "Face", emoji: "😊" },
+  { id: "palms", label: "Hands" },
+  { id: "feet", label: "Feet" },
+  { id: "underarms", label: "Underarms" },
+  { id: "face", label: "Face" },
 ];
 
-const CUSTOM_AREA_BADGES = [
-  "bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-200",
-  "bg-violet-50 text-violet-800 dark:bg-violet-950/60 dark:text-violet-200",
-  "bg-rose-50 text-rose-800 dark:bg-rose-950/60 dark:text-rose-200",
-  "bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-200",
-  "bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200",
+const CUSTOM_AREA_BARS = [
+  "bg-blue-600",
+  "bg-violet-600",
+  "bg-rose-600",
+  "bg-amber-600",
+  "bg-emerald-600",
 ];
 
 export function NoteCard({ note }: NoteCardProps) {
@@ -93,15 +93,14 @@ export function NoteCard({ note }: NoteCardProps) {
 
   return (
     <Link href={`/notes/${note.id}`}>
-      <Card className="h-full transition-colors cursor-pointer hover:bg-muted/50">
+      <Card className="h-full rounded-[3px] border-border bg-card shadow-none backdrop-blur-none dark:border-border dark:shadow-none transition-colors cursor-pointer hover:border-teal-600/50">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-lg">📅</span>
               <CardTitle className="text-lg">{logDate}</CardTitle>
             </div>
-            <div className={`px-3 py-1 rounded-full text-white text-sm font-bold ${getSeverityBgClass(avgSeverity)}`}>
-              {avgSeverity}/10
+            <div className="rounded-[3px] border px-2 py-1 text-xs font-medium text-muted-foreground">
+              Average {avgSeverity}/10
             </div>
           </div>
           {content?.timeOfDay && (
@@ -114,35 +113,43 @@ export function NoteCard({ note }: NoteCardProps) {
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
               Sweat Severity
             </p>
-            <div className="flex gap-2">
-              {AREAS.map((area) => {
+            <div className="space-y-3">
+              {[...AREAS, ...customAreas.slice(0, 5).map((area: any) => ({
+                id: area.area,
+                label: area.label || area.area.replace(/^custom:/, ""),
+              }))].map((area, index) => {
                 const areaData = areas.find((a: any) => a.area === area.id) || {};
                 const severity = areaData.severity || 0;
-                const height = Math.max(severity * 4, 8);
+                const percentage = Math.min(10, Math.max(0, severity)) * 10;
+                const barColor = area.id.startsWith("custom:")
+                  ? CUSTOM_AREA_BARS[areaData.colorIndex ?? index - AREAS.length]
+                  : getSeverityBgClass(severity);
                 
                 return (
-                  <div key={area.id} className="flex-1 flex flex-col items-center gap-1">
-                    <div 
-                      className={`w-full rounded-t ${getSeverityBgClass(severity)}`}
-                      style={{ height: `${height}px`, minHeight: "8px" }}
-                    />
-                    <span className="text-lg">{area.emoji}</span>
-                    <span className={`text-xs font-bold ${getSeverityTextClass(severity)}`}>
-                      {severity}
-                    </span>
+                  <div key={area.id} className="space-y-1.5">
+                    <div className="flex items-center justify-between gap-3 text-xs">
+                      <span className="font-medium">{area.label}</span>
+                      <span className={`tabular-nums ${getSeverityTextClass(severity)}`}>
+                        {severity}/10
+                      </span>
+                    </div>
+                    <div
+                      role="meter"
+                      aria-label={`${area.label} sweat severity`}
+                      aria-valuemin={0}
+                      aria-valuemax={10}
+                      aria-valuenow={Math.min(10, Math.max(0, severity))}
+                      className="h-2 overflow-hidden bg-muted"
+                    >
+                      <div
+                        className={`h-full ${barColor}`}
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
                   </div>
                 );
               })}
             </div>
-            {customAreas.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {customAreas.slice(0, 5).map((area: any, index: number) => (
-                  <span key={area.area} className={`rounded-full px-2 py-1 text-xs font-medium ${CUSTOM_AREA_BADGES[typeof area.colorIndex === "number" ? area.colorIndex : index]}`}>
-                    {area.label || area.area.replace(/^custom:/, "")}: {area.severity || 0}/10
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Triggers */}
@@ -175,7 +182,7 @@ export function NoteCard({ note }: NoteCardProps) {
                   {[1, 2, 3, 4, 5].map((level) => (
                     <div
                       key={level}
-                      className={`h-3 w-6 rounded-sm ${
+                      className={`h-3 w-6 rounded-[3px] ${
                         level <= stressScore ? "bg-rose-400" : "bg-slate-200 dark:bg-slate-700"
                       }`}
                     />
