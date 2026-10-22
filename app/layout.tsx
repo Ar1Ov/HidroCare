@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { BubbleBackground } from "@/components/layout/bubble-background";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,6 +40,7 @@ export default function RootLayout({
 					<BubbleBackground>{children}</BubbleBackground>
 					<Toaster />
 				</ThemeProvider>
+				<SpeedInsights />
 			</body>
 		</html>
 	);
